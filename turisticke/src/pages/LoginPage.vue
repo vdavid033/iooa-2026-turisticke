@@ -13,9 +13,9 @@
         <div class="q-gutter-md full-with" style="max-width: 500px">
           <div class="loginText" style="text-align: center">{{ tab }}</div>
 
-          <q-input v-model="credentials.email" class="input" outlined label="Email" />
+          <q-input v-model="credentials.korisnicko_ime" outlined label="Korisničko ime" />
           <div> </div>
-          <q-input v-model="credentials.password" class="input" outlined type="password" label="Password" />
+          <q-input v-model="credentials.lozinka" outlined type="password" label="Lozinka" />
 
 
           <div class="row justify-between">
@@ -39,6 +39,11 @@ store
 */
 //const storeAuth = useStoreAuth()
 
+// Router i axios
+import axios from "axios"
+import { useRouter } from "vue-router"
+
+const router = useRouter()
 
 const register = ref(false)
 const tab = ref('')
@@ -57,30 +62,51 @@ credentials
 */
 
 const credentials = reactive({
-  email: '',
-  password: ''
+  korisnicko_ime: '',
+  lozinka: ''
 })
 
 /*
   submit
 */
 
-const onSubmit = () => {
-  console.log("forma potvrđana")
-
-  if (!credentials.email || !credentials.password) {
-    alert('Unesite email i lozinku')
+const onSubmit = async () => {
+  if (!credentials.korisnicko_ime || !credentials.lozinka) {
+    alert('Unesite korisničko ime i lozinku')
+    return
   }
-  else {
+
+  try {
     if (register.value) {
-      console.log('Registriraj korisnika sa:', credentials)
+      // Registracija
+      const res = await axios.post("http://localhost:4200/register", credentials)
+
+      if (res.data.success) {
+        alert("Registracija uspješna")
+        register.value = false
+        tab.value = "Prijava"
+      } else {
+        alert(res.data.message)
+      }
+
+    } else {
+      // Login
+      const res = await axios.post("http://localhost:4200/login", credentials)
+
+      if (res.data.success) {
+        alert("Prijava uspješna")
+
+        localStorage.setItem("user", JSON.stringify(res.data.user))
+
+        router.push("/")   
+      } else {
+        alert(res.data.message)
+      }
     }
-    else {
-      console.log('Prijavi korisnika sa:', credentials)
-    }
+  } catch (err) {
+    console.error(err)
+    alert("Greška na serveru")
   }
-
-
 }
 
 </script>

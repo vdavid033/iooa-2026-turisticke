@@ -6,6 +6,7 @@ const express = require('express');
 const app = express();
 var cors = require('cors')
 var bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
 //const conn=require('./connection')
 
 app.use(bodyParser.json({limit: '50mb'}));
@@ -44,6 +45,72 @@ app.use(function (req, res, next) {
 });
 // kraj fix-a
 
+// Registracija
+app.post('/register', async (req, res) => {
+  const { korisnicko_ime, lozinka } = req.body;
+
+  if (!korisnicko_ime || !lozinka) {
+    return res.send({ success: false, message: "Nedostaju podaci" });
+  }
+
+  try {
+    // provjera postoji li korisnik
+    dbConn.query(
+      "SELECT * FROM korisnici_test WHERE korisnicko_ime = ?",
+      [korisnicko_ime],
+      async (err, results) => {
+        if (err) return res.send(err);
+
+        if (results.length > 0) {
+          return res.send({ success: false, message: "Korisnik već postoji" });
+        }
+
+        // Hash lozinke
+        const hashedPassword = await bcrypt.hash(lozinka, 10);
+
+        dbConn.query(
+          "INSERT INTO korisnici_test (korisnicko_ime, lozinka) VALUES (?, ?)",
+          [korisnicko_ime, hashedPassword],
+          (err, result) => {
+            if (err) return res.send(err);
+
+            res.send({ success: true, message: "Registracija uspješna" });
+          }
+        );
+      }
+    );
+  } catch (err) {
+    res.send({ success: false, message: "Greška servera" });
+  }
+});
+
+// Login
+app.post('/login', (req, res) => {
+  const { korisnicko_ime, lozinka } = req.body;
+
+  dbConn.query(
+    "SELECT * FROM korisnici_test WHERE korisnicko_ime = ?",
+    [korisnicko_ime],
+    async (err, results) => {
+      if (err) return res.send(err);
+
+      if (results.length === 0) {
+        return res.send({ success: false, message: "Korisnik ne postoji" });
+      }
+
+      const user = results[0];
+
+      // Usporedba lozinke
+      const match = await bcrypt.compare(lozinka, user.lozinka);
+
+      if (match) {
+        res.send({ success: true, user });
+      } else {
+        res.send({ success: false, message: "Pogrešna lozinka" });
+      }
+    }
+  );
+});
 
 app.post('/unosAtrakcija', function (request, response) {
   const data = request.body;
