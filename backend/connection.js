@@ -1,9 +1,9 @@
 const mysql = require('mysql');
 const con = mysql.createConnection({
-    host: '193.198.97.21',
-    user:'iooa-turisticke',
+    host: 'ucka.veleri.hr',
+    user:'amioc',
     password:'11', 
-    database:'iooa-turisticke'
+    database:'amioc'
 });
 
 /*con.connect((err)=>{
