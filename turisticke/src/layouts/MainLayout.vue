@@ -27,17 +27,10 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
-import EssentialLink from "components/EssentialLink.vue";
+//import EssentialLink from "components/EssentialLink.vue";
 
-const linksList = [
-  {
-    title: "Prijava",
-    icon: "login",
-    link: "auth",
-    target: "_self",
-  },
-  {
+//const linksList = [
+/*  {
     title: "Moje atrakcije",
     caption: "popis mojih atrakcija",
     icon: "favorite",
@@ -82,7 +75,12 @@ const linksList = [
   //   icon: "favorite",
   //   link: "https://awesome.quasar.dev",
   // },
-];
+];*/
+
+// Layout skripta za dinamično mijenjanje kartice Prijave i Odjave
+
+import { defineComponent, ref, computed } from "vue";
+import EssentialLink from "components/EssentialLink.vue";
 
 export default defineComponent({
   name: "MainLayout",
@@ -92,15 +90,64 @@ export default defineComponent({
   },
 
   setup() {
-    const leftDrawerOpen = ref(false);
+    const leftDrawerOpen = ref(false)
+
+    const user = ref(JSON.parse(localStorage.getItem("user")))
+
+    const logout = () => {
+      localStorage.removeItem("user")
+      location.reload()
+    }
+
+    const essentialLinks = computed(() => {
+
+      const links = []
+
+      if (!user.value) {
+        links.push({
+          title: "Prijava",
+          icon: "login",
+          link: "/auth"
+        })
+      } else {
+        links.push({
+          title: "Odjava",
+          icon: "logout",
+          action: logout
+        })
+      }
+
+      links.push(
+        {
+          title: "Moje atrakcije",
+          caption: "popis mojih atrakcija",
+          icon: "favorite",
+          link: "/"
+        },
+        {
+          title: "Unos atrakcija",
+          caption: "unos novih atrakcija",
+          icon: "swap_horizontal_circle",
+          link: "/unos"
+        },
+        {
+          title: "Testiranje Axiosa",
+          caption: "služi za testiranje Axiosa",
+          icon: "swap_horizontal_circle",
+          link: "/axo"
+        }
+      )
+
+      return links
+    })
 
     return {
-      essentialLinks: linksList,
+      essentialLinks,
       leftDrawerOpen,
       toggleLeftDrawer() {
-        leftDrawerOpen.value = !leftDrawerOpen.value;
+        leftDrawerOpen.value = !leftDrawerOpen.value
       },
-    };
+    }
   },
-});
+})
 </script>
