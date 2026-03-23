@@ -3,3 +3,4 @@ Turističke atrakcije<br>
 Laura Celcner
 Anto Avgustinović
 Luka Majetić
+Elena Simonović
