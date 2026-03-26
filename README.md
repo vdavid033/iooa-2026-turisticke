@@ -1,102 +1,96 @@
 
 <p align="center">
-  <img src="./turisticke/public/gif.gif" alt="Turisticke atrakcije Logo" width="260" />
+  <img src="./turisticke/public/gif.gif" alt="Tourist Attractions Logo" width="260" />
 </p>
 
-<h1 align="center">Turisticke atrakcije</h1>
+<h1 align="center">Tourist Attractions</h1>
 
 <p align="center">
-  A full-stack web application for exploring and managing tourist attractions.
+  A full-stack web application for exploring, managing, and interacting with tourist attractions.
 </p>
 
 <br>
 
 <p align="center">
-  Armin Lišić &nbsp;&nbsp;·&nbsp;&nbsp; Ivan Gržetić
+  Armin Lišić · Ivan Gržetić
 </p>
 
 ---
 
 ## Overview
 
-Turisticke atrakcije is a full-stack application designed for managing and exploring tourist destinations.
+Tourist Attractions is a full-stack web application designed to provide users with a centralized platform for discovering and managing tourist locations.
 
-The system combines a modern frontend built with Quasar and Vue, and a backend powered by Node.js, Express, and MySQL.  
-Users can browse attractions, view detailed information, leave comments, rate content, and interact with the platform based on their roles.
+The application allows users to browse attractions, add their own entries, leave comments, rate content, and interact with the system based on their role. The system follows a clean separation between frontend and backend layers and uses JWT-based authentication.
+
+An additional feature of the project is a locally running AI chatbot powered by Ollama, which uses database context and provides real-time streaming responses.
 
 ---
 
-## Stack
+## Tech Stack
 
-<table align="center">
-  <tr>
-    <td valign="top" width="50%">
+### Frontend
 
-<strong>Frontend</strong>
+- Vue 3
+- Quasar Framework
+- Vue Router
+- Axios
+- Leaflet
+- MarkdownIt
 
-- Quasar Framework  
-- Vue.js  
-- Axios  
-- CSS  
+### Backend
 
-    </td>
-    <td valign="top" width="50%">
+- Node.js
+- Express.js
+- MySQL
+- JWT (jsonwebtoken)
+- bcryptjs
 
-<strong>Backend</strong>
+### AI
 
-- Node.js  
-- Express.js  
-- MySQL  
-- JWT authentication  
-- bcryptjs  
-
-    </td>
-  </tr>
-</table>
+- Ollama (local LLM)
+- Streaming responses via SSE
 
 ---
 
 ## Architecture
 
-<table align="center">
-  <tr>
-    <td><strong>Type</strong></td>
-    <td>Full-stack web application</td>
-  </tr>
-  <tr>
-    <td><strong>Client</strong></td>
-    <td>Quasar / Vue</td>
-  </tr>
-  <tr>
-    <td><strong>Server</strong></td>
-    <td>Node.js / Express</td>
-  </tr>
-  <tr>
-    <td><strong>Database</strong></td>
-    <td>MySQL</td>
-  </tr>
-  <tr>
-    <td><strong>Auth</strong></td>
-    <td>JWT</td>
-  </tr>
-</table>
+The application follows a standard full-stack architecture:
+
+- The frontend communicates with the backend via REST API calls
+- The backend handles business logic and database operations
+- MySQL is used for persistent data storage
+- JWT is used for authentication and authorization
+- The chatbot communicates through the backend, which acts as a proxy to the local Ollama API
+
+---
+
+## Features
+
+- User registration and login
+- JWT-based authentication and role handling
+- Viewing all tourist attractions
+- Viewing user-specific attractions
+- Creating and deleting attractions
+- Commenting system
+- Rating system
+- Map-based location selection using Leaflet
+- Image upload stored as base64
+- AI chatbot with real-time streaming responses
+- Persistent chatbot history using localStorage
 
 ---
 
 ## Project Structure
 
 ```text
-Turisticke_atrakcije-main/
-├── backend/        # API and server logic
-├── public/         # Static assets
-├── src/            # Frontend source (Quasar / Vue)
-├── package.json    # Frontend dependencies
-└── README.md
+backend/        # Express server and API logic
+turisticke/     # Quasar frontend application
 ````
 
 ---
 
-## Run
+## Running the Project
 
 ### Backend
 
@@ -108,5 +102,44 @@ node index.js
 ### Frontend
 
 ```bash
+cd turisticke
 npx quasar dev
+```
+
+---
+
+## Requirements
+
+* Node.js installed
+* MySQL database configured
+* Quasar CLI (optional but recommended)
+* Ollama installed and running locally
+
+---
+
+## Configuration Notes
+
+* Backend runs on [http://localhost:4200](http://localhost:4200)
+* Ollama runs on [http://localhost:11434](http://localhost:11434)
+* JWT token is stored in localStorage
+* Images are handled as base64 strings
+
+Make sure both the backend and Ollama services are running before using the chatbot functionality.
+
+---
+
+## Notes
+
+* The project uses a modular structure with clearly separated concerns
+* Authentication is handled on both frontend and backend levels
+* Some endpoints require JWT tokens while others are public
+* The chatbot relies on database data to provide contextual answers
+
+---
+
+## Authors
+
+Armin Lišić
+Ivan Gržetić
+
 ```
