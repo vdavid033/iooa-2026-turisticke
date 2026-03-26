@@ -29,27 +29,34 @@ An additional feature of the project is a locally running AI chatbot powered by 
 
 ## Tech Stack
 
-### Frontend
-
-- Vue 3
-- Quasar Framework
-- Vue Router
-- Axios
-- Leaflet
-- MarkdownIt
-
-### Backend
-
-- Node.js
-- Express.js
-- MySQL
-- JWT (jsonwebtoken)
-- bcryptjs
-
-### AI
-
-- Ollama (local LLM)
-- Streaming responses via SSE
+<table align="center">
+  <tr>
+    <td align="center" width="33%"><strong>Frontend</strong></td>
+    <td align="center" width="33%"><strong>Backend</strong></td>
+    <td align="center" width="33%"><strong>AI</strong></td>
+  </tr>
+  <tr>
+    <td valign="top" align="center">
+      Vue 3<br>
+      Quasar Framework<br>
+      Vue Router<br>
+      Axios<br>
+      Leaflet<br>
+      MarkdownIt
+    </td>
+    <td valign="top" align="center">
+      Node.js<br>
+      Express.js<br>
+      MySQL<br>
+      JWT (jsonwebtoken)<br>
+      bcryptjs
+    </td>
+    <td valign="top" align="center">
+      Ollama (local LLM)<br>
+      SSE streaming responses
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -141,5 +148,3 @@ Make sure both the backend and Ollama services are running before using the chat
 
 Armin Lišić
 Ivan Gržetić
-
-```
