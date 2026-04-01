@@ -197,24 +197,17 @@ const spremiSliku = async (link, id) => {
 }
 
 //Dodavanje ocjene za atrakciju
-
 const dodajOcjenu = async (ocjena, id) => {
+  if (!ocjena) return; //u slucaju da nema ocjene
   try {
-    console.log('Kliknuli ste na: ', ocjena, " ocjenu")
-    console.log("ID: ", id)
-
-    const response = await api.put(`http://localhost:4200/dodajOcjenu/${id}`, {
-      prosjecna_ocjena: ocjena
+    await api.post(`http://localhost:4200/dodajOcjenuOcjene/${id}`, {
+      ocjena: ocjena
     });
-    console.log(response.data);
-
-
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
   }
   getPosts();
-}
+};
 
 
 

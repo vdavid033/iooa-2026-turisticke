@@ -30,12 +30,12 @@
           </div>
 
           <q-rating
-            v-model="post.prosjecna_ocjena"
+            v-model="post.ocjenaUser"
             :max="5"
-            :readonly="true"
             size="32px"
+            @update:model-value="dodajOcjenu(post.ocjenaUser, post.id_atrakcije)"
           />
-        </q-card-section>
+          </q-card-section>
 
         <q-card-section class="q-pt-none">
           <div class="text-subtitle1">{{ post.adresa }}</div>
@@ -201,10 +201,15 @@ const getPosts = async () => {
   try {
     const response = await api.get("atrakcije");
     const response2 = await api.get("slike");
-    console.log(response.data);
-    console.log(response2.data);
     posts.value = response.data;
     pics.value = response2.data;
+
+    // za svaku pojedinacnu atrakciju
+    posts.value.forEach(post => {
+      // avg_ocjena ili nula ak nema ocjene
+      post.ocjenaUser = Number(post.avg_ocjena) || 0;
+    });
+
   } catch (error) {
     console.log(error);
   }

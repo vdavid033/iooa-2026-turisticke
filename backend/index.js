@@ -158,14 +158,23 @@ app.post("/api/unos-slike", function (req, res) {
 
 
 //uzimanje podataka o atrakcijama
+//racunanje prosjecne ocjene
 app.get('/atrakcije', (req,res)=>{
-    dbConn.query("select * from atrakcije", (err,result)=>{
-        if(err){
-            res.send('error');
-        }else{
-            res.send(result);
-        }
-    });
+  dbConn.query(`
+    SELECT 
+      a.*, 
+      AVG(o.ocjena) AS avg_ocjena
+    FROM atrakcije a
+    LEFT JOIN Ocjena o 
+      ON a.id_atrakcije = o.VK_ID_Atrakcije
+    GROUP BY a.id_atrakcije
+  `, (err,result)=>{
+    if(err){
+      res.send('error');
+    }else{
+      res.send(result);
+    }
+  });
 });
 app.get('/slike', (req,res)=>{
   dbConn.query("select * from slike", (err,result)=>{
@@ -290,17 +299,22 @@ app.delete('/obrisi_atrakcije/:id', function (request, response){
     });
   });
 
- // Dodavanje ocjene za atrakciju
- 
- app.put('/dodajOcjenu/:id', (req, res) => {
-  const data = [req.body.prosjecna_ocjena, req.params.id]
-  dbConn.query("UPDATE atrakcije SET prosjecna_ocjena = ? WHERE id_atrakcije = ?", data,(err,result)=>{
-    if(err){
-      res.send('Error')
-    }else{
-      res.send(result)
+// Dodavanje ocjene za atrakciju u tablicu OCJENE
+app.post('/dodajOcjenuOcjene/:id', (req, res) => {
+  const data = [req.body.ocjena, req.params.id]; // use 'ocjena' instead of 'prosjecna_ocjena'
+
+  dbConn.query(
+    "INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES (?, ?)",
+    data,
+    (err, result) => {
+      if(err){
+        console.log(err);
+        res.send('Error');
+      } else {
+        res.send(result);
+      }
     }
-  })
+  );
 });
 
 
