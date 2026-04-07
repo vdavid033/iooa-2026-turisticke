@@ -1,6 +1,6 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+  <q-layout view="lHh Lpr lFf" style="min-height: 100vh;">
+    <q-header elevated style="background: linear-gradient(to right, #4f46e5, #7e22ce) !important; height: 100px; display: flex; align-items: center;">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
@@ -20,7 +20,7 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container style="padding-bottom: 0 !important;">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -30,7 +30,15 @@
 //import EssentialLink from "components/EssentialLink.vue";
 
 //const linksList = [
-/*  {
+/*  
+{
+    title: "Homepage",
+    caption: "Main page",
+    icon: "home",
+    link: "/home",
+    target: "_self",
+  },
+{
     title: "Moje atrakcije",
     caption: "popis mojih atrakcija",
     icon: "favorite",
@@ -118,6 +126,12 @@ export default defineComponent({
       }
 
       links.push(
+         {
+          title: "Homepage",
+          caption: "Main page",
+          icon: "home",
+          link: "/home"
+        },
         {
           title: "Moje atrakcije",
           caption: "popis mojih atrakcija",
