@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue"
+import { ref, reactive, onMounted, watch } from "vue"
 //import { useStoreAuth } from "src/stores/storeAuth"
 
 
@@ -41,21 +41,36 @@ store
 
 // Router i axios
 import axios from "axios"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute, } from "vue-router"
 
+const route = useRoute()
 const router = useRouter()
 
 const register = ref(false)
-const tab = ref('')
+const tab = ref('Prijava')
 
 
-
-if (!register.value) {
-  tab.value = "Prijava"
+// Funkcija koja postavlja tab ovisno o URL parametru
+const updateTabFromRoute = () => {
+  if (route.query.mode === 'register') {
+    register.value = true
+    tab.value = 'Registracija'
+  } else {
+    register.value = false
+    tab.value = 'Prijava'
+  }
 }
-else {
-  tab.value = "Registracija"
-}
+
+// Provjeri pri učitavanju
+onMounted(() => {
+  updateTabFromRoute()
+})
+
+// Prati promjene ako korisnik klikne "Prijava" pa odmah "Registracija" u toolbaru
+watch(() => route.query.mode, () => {
+  updateTabFromRoute()
+})
+
 
 /*
 credentials
@@ -98,7 +113,7 @@ const onSubmit = async () => {
 
         localStorage.setItem("user", JSON.stringify(res.data.user))
 
-        router.push("/")   
+        router.push("/")
       } else {
         alert(res.data.message)
       }

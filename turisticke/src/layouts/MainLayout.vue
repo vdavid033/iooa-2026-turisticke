@@ -1,26 +1,73 @@
 <template>
   <q-layout view="lHh Lpr lFf" style="min-height: 100vh;">
     <q-header elevated style="background: linear-gradient(to right, #4f46e5, #7e22ce) !important; height: 100px; display: flex; align-items: center;">
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+      <q-toolbar class="q-px-md">
+        <!-- Gumb za menu (opcionalno, ostavio sam ga ako zatreba) -->
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" class="text-white q-mr-sm" />
 
-        <q-toolbar-title>
-          <div class="text-h6"><b>Turističke atrakcije</b></div>
-        </q-toolbar-title>
+        <!-- LIJEVA STRANA: Registracija -->
+        <q-btn
+        v-if="!user"
+          unelevated
+          rounded
+          color="amber-7"
+          text-color="black"
+          label="Registracija"
+          to="/auth?mode=register"
+          class="q-px-lg text-weight-bold"
+        />
 
-        <div>Bad Developers</div>
+        <!-- SPACE: Ovo gura sve nakon njega na desnu stranu -->
+        <q-space />
+
+        <!-- DESNA STRANA: Prijava i Sve atrakcije -->
+        <div class="q-gutter-sm">
+          <q-btn
+          v-if="!user"
+            unelevated
+            rounded
+            color="amber-7"
+            text-color="black"
+            label="Prijava"
+            to="/auth?mode=login"
+            class="q-px-lg text-weight-bold"
+          />
+
+          <!-- Gumb Odjava (ako JE prijavljen) -->
+          <q-btn
+            v-else
+            unelevated
+            rounded
+            color="red-5"
+            text-color="white"
+            label="Odjava"
+            @click="logout"
+            class="q-px-lg text-weight-bold"
+          />
+
+          <q-btn
+            unelevated
+            rounded
+            color="amber-7"
+            text-color="black"
+            label="Sve atrakcije"
+            to="/home"
+            class="q-px-lg text-weight-bold"
+          />
+        </div>
+
       </q-toolbar>
     </q-header>
 
+    <!-- Ostatak layouta ostaje isti -->
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
         <q-item-label header> Izbornik </q-item-label>
-
         <EssentialLink v-for="link in essentialLinks" :key="link.title" v-bind="link" />
       </q-list>
     </q-drawer>
 
-    <q-page-container style="padding-bottom: 0 !important;">
+    <q-page-container>
       <router-view />
     </q-page-container>
   </q-layout>
@@ -30,7 +77,7 @@
 //import EssentialLink from "components/EssentialLink.vue";
 
 //const linksList = [
-/*  
+/*
 {
     title: "Homepage",
     caption: "Main page",
@@ -111,19 +158,6 @@ export default defineComponent({
 
       const links = []
 
-      if (!user.value) {
-        links.push({
-          title: "Prijava",
-          icon: "login",
-          link: "/auth"
-        })
-      } else {
-        links.push({
-          title: "Odjava",
-          icon: "logout",
-          action: logout
-        })
-      }
 
       links.push(
          {
@@ -156,6 +190,8 @@ export default defineComponent({
     })
 
     return {
+      user,
+      logout,
       essentialLinks,
       leftDrawerOpen,
       toggleLeftDrawer() {
