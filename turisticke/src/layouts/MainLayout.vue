@@ -20,7 +20,7 @@
         <!-- SPACE: Ovo gura sve nakon njega na desnu stranu -->
         <q-space />
 
-        <!-- DESNA STRANA: Prijava i Sve atrakcije -->
+        <!-- DESNA STRANA: Prijava i Sve a trakcije -->
         <div class="q-gutter-sm">
           <q-btn
           v-if="!user"
@@ -51,7 +51,7 @@
             color="amber-7"
             text-color="black"
             label="Sve atrakcije"
-            to="/home"
+            to="/atrakcije"
             class="q-px-lg text-weight-bold"
           />
         </div>

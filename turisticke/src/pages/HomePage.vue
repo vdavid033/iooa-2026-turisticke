@@ -1,9 +1,7 @@
 <template>
   <q-page class="bg-white" style="display: flex; flex-direction: column; min-height: calc(100vh - 100px) !important; padding: 0 !important; margin: 0 !important;">
-    <header 
-      class="hero-section text-white relative-position" 
-      style="background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) !important; min-height: 500px; width: 100%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
-    >
+    
+    <header class="hero-section text-white relative-position" style="background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) !important; min-height: 500px; width: 100%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
       <div class="absolute-full bg-pattern opacity-20"></div>
       <div class="relative-position max-w-7xl mx-auto px-md text-center">
         <div class="hero-content">
@@ -23,47 +21,52 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-md py-xl" style="flex: 1; width: 100%;">
-      <div class="text-center q-mb-xl">
-        <h2 class="text-h3 text-primary q-mb-sm">Naše najpopularnije destinacije</h2>
-        <div class="divider-gradient mx-auto"></div>
-        <p class="q-mt-lg text-body1 text-grey-8 max-w-2xl mx-auto">
-          Od povijesnih gradova do prirodnih čuda, Hrvatska nudi nezaboravna iskustva za svakog putnika
-        </p>
-      </div>
+      
+      <router-view v-if="$route.path !== '/' && $route.path !== '/home'" />
 
-      <div class="row q-col-gutter-xl q-mb-xl">
-        <div 
-          v-for="attraction in attractions" 
-          :key="attraction.id_atrakcije" 
-          class="col-12 col-sm-6 col-md-4"
-        >
-          <q-card 
-            class="attraction-card shadow-15 hover-scale cursor-pointer"
-            @click="$router.push({ name: 'one_atraction', params: { id: attraction.id_atrakcije } })"
+      <div v-else>
+        <div class="text-center q-mb-xl">
+          <h2 class="text-h3 text-primary q-mb-sm">Naše najpopularnije destinacije</h2>
+          <div class="divider-gradient mx-auto"></div>
+          <p class="q-mt-lg text-body1 text-grey-8 max-w-2xl mx-auto">
+            Od povijesnih gradova do prirodnih čuda, Hrvatska nudi nezaboravna iskustva za svakog putnika
+          </p>
+        </div>
+
+        <div class="row q-col-gutter-xl q-mb-xl">
+          <div 
+            v-for="attraction in attractions" 
+            :key="attraction.id_atrakcije" 
+            class="col-12 col-sm-6 col-md-4"
           >
-            <q-img :src="attraction.slika" :ratio="16/9" class="rounded-borders">
-              <div class="absolute-top-right q-ma-sm" style="background: transparent">
-                <q-badge color="orange" text-color="white" class="q-pa-xs text-bold shadow-2">
-                  <q-icon name="star" size="14px" class="q-mr-xs" />
-                  {{ attraction.prosjecna_ocjena ? attraction.prosjecna_ocjena.toFixed(1) : '0.0' }}
-                </q-badge>
-              </div>
-              <div class="absolute-bottom text-h6 bg-black-opacity q-pa-sm">
-                {{ attraction.naziv }}
-              </div>
-            </q-img>
-            <q-card-section>
-              <div class="text-subtitle1 text-grey-9 text-weight-medium">
-                {{ attraction.adresa }}
-              </div>
-              <div class="text-caption text-grey-6 q-mt-xs">Kliknite za više detalja</div>
-            </q-card-section>
-          </q-card>
+            <q-card 
+              class="attraction-card shadow-15 hover-scale cursor-pointer" 
+              @click="$router.push({ name: 'one_atraction', params: { id: attraction.id_atrakcije } })"
+            >
+              <q-img :src="attraction.slika" :ratio="16/9" class="rounded-borders">
+                <div class="absolute-top-right q-ma-sm" style="background: transparent">
+                  <q-badge color="orange" text-color="white" class="q-pa-xs text-bold shadow-2">
+                    <q-icon name="star" size="14px" class="q-mr-xs" />
+                    {{ attraction.prosjecna_ocjena ? attraction.prosjecna_ocjena.toFixed(1) : '0.0' }}
+                  </q-badge>
+                </div>
+                <div class="absolute-bottom text-h6 bg-black-opacity q-pa-sm">
+                  {{ attraction.naziv }}
+                </div>
+              </q-img>
+              <q-card-section>
+                <div class="text-subtitle1 text-grey-9 text-weight-medium">
+                  {{ attraction.adresa }}
+                </div>
+                <div class="text-caption text-grey-6 q-mt-xs">Kliknite za više detalja</div>
+              </q-card-section>
+            </q-card>
+          </div>
         </div>
       </div>
     </main>
 
-    <footer class="footer-section text-white q-pa-xl text-center" style="margin-top: auto; width: 100%; margin-bottom: 0;">
+    <footer class="footer-section text-white q-pa-xl text-center" style="background-color: #111827 !important;">
       <div class="max-w-7xl mx-auto">
         <p class="text-purple-3 text-h6 q-mb-xs">Otkrijte ljepotu Hrvatske na svoj način</p>
         <p class="text-grey-5 opacity-70">© 2026 Hrvatska Turistička Atrakcija. Sva prava pridržana.</p>
@@ -80,7 +83,7 @@ const attractions = ref([])
 
 const fetchAttractions = async () => {
   try {
-    const response = await axios.get('http://localhost:4200/atrakcije')
+    const response = await axios.get('http://localhost:4200/atrakcije?limit=6')
     attractions.value = response.data
   } catch (error) {
     console.error("Greška pri komunikaciji s backendom:", error)
@@ -93,11 +96,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-/* Osiguravamo da nema skrivenih margina na dnu stranice */
-:deep(.q-page-container) {
-  padding-bottom: 0 !important;
-}
-
 .hero-section {
   z-index: 1;
 }
@@ -116,6 +114,8 @@ onMounted(() => {
   height: 5px;
   background: linear-gradient(to right, #facc15, #a855f7) !important;
   border-radius: 10px;
+  /* DODAJ OVE DVIJE LINIJE: */
+  display: block; 
   margin: 0 auto !important;
 }
 
@@ -131,11 +131,6 @@ onMounted(() => {
 
 .bg-black-opacity {
   background: rgba(0, 0, 0, 0.4) !important;
-}
-
-.footer-section {
-  background-color: #111827 !important;
-  display: block; /* Osigurava da se ponaša kao block element */
 }
 
 @media (max-width: 600px) {

@@ -3,13 +3,21 @@ const routes = [
     path: "/",
     component: () => import("layouts/MainLayout.vue"),
     children: [
-      { path: "", component: () => import("pages/HomePage.vue") },
-      { path: "unos", component: () => import("pages/Unos_atrakcija.vue")},
+      { 
+        path: "", 
+        component: () => import("pages/HomePage.vue") 
+      },
+      { 
+        path: "atrakcije", 
+        name: "SveAtrakcije",
+        component: () => import("pages/SveAtrakcije.vue") 
+      },
+      { path: "unos", component: () => import("pages/Unos_atrakcija.vue") },
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
-
     ],
   },
 
+  // 2. BLANK LAYOUT (Stranice bez Headera - Login, Detalji, Slike)
   {
     path: "/auth",
     component: () => import("layouts/BlankLayout.vue"),
@@ -19,53 +27,30 @@ const routes = [
   },
 
   {
-    path: "/",
-    component: () => import("layouts/BlankLayout.vue"),
-    children: [
-      { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
-      { path: "auth", component: () => import("pages/LoginPage.vue") },
-
-
-    ],
-  },
-
-  {
     path: "/one_atraction",
     component: () => import("layouts/BlankLayout.vue"),
     children: [
-      {name: "one_atraction", path: ":id", component: () => import("pages/AtrakcijePage.vue") },
-
+      { name: "one_atraction", path: ":id", component: () => import("pages/AtrakcijePage.vue") },
     ],
   },
+
   {
     path: "/komentari",
     component: () => import("layouts/BlankLayout.vue"),
     children: [
-      {name: "komentari", path: ":id", component: () => import("src/pages/komentariPage.vue") },
+      { name: "komentari", path: ":id", component: () => import("pages/komentariPage.vue") },
     ],
   },
-
 
   {
     path: "/slika",
     component: () => import("layouts/BlankLayout.vue"),
     children: [
-      {name: "slika", path: "", component: () => import("src/pages/dodaj_slika.vue") },
+      { name: "slika", path: "", component: () => import("pages/dodaj_slika.vue") },
     ],
   },
 
-  /*
-  {
-   path: "/atr",
-    component: () => import("layouts/BlankLayout.vue"),
-    children: [
-      {name: "atr", path: "/atr", component: () => import("pages/AtrakcijePage.vue") },
-    ],
-  },
-*/
-
-  // Always leave this as last one,
-  // but you can also remove it
+  // 404 Error 
   {
     path: "/:catchAll(.*)*",
     component: () => import("pages/ErrorNotFound.vue"),
