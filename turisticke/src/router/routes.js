@@ -3,18 +3,26 @@ const routes = [
     path: "/",
     component: () => import("layouts/MainLayout.vue"),
     children: [
-      { 
-        path: "", 
-        component: () => import("pages/HomePage.vue") 
+      {
+        path: "",
+        component: () => import("pages/HomePage.vue")
       },
-      { 
-        path: "atrakcije", 
+      {
+        path: "atrakcije",
         name: "SveAtrakcije",
-        component: () => import("pages/SveAtrakcije.vue") 
+        component: () => import("pages/SveAtrakcije.vue")
       },
       { path: "unos", component: () => import("pages/Unos_atrakcija.vue") },
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
     ],
+  },
+
+  {
+    path: '/admin',
+    component: () => import('layouts/AdminLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/AdminPage.vue') }
+    ]
   },
 
   // 2. BLANK LAYOUT (Stranice bez Headera - Login, Detalji, Slike)
@@ -50,7 +58,7 @@ const routes = [
     ],
   },
 
-  // 404 Error 
+  // 404 Error
   {
     path: "/:catchAll(.*)*",
     component: () => import("pages/ErrorNotFound.vue"),
