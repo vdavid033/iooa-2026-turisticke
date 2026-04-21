@@ -44,14 +44,18 @@
         <q-card class="col stats-card">
           <q-card-section>
             <div>Average Rating</div>
-            <div class="stats-value">4.7</div>
+            <div class="stats-value">
+              {{ averageRating }}
+            </div>
           </q-card-section>
         </q-card>
 
         <q-card class="col stats-card">
           <q-card-section>
             <div>Categories</div>
-            <div class="stats-value">4</div>
+            <div class="stats-value">
+              {{ categoriesCount }}
+            </div>
           </q-card-section>
         </q-card>
       </div>
@@ -276,6 +280,21 @@ export default {
       fetchComments()
     })
 
+    const averageRating = computed(() => {
+      if (attractions.value.length === 0) return 0
+
+      const sum = attractions.value.reduce((acc, attr) => {
+        return acc + (Number(attr.avg_ocjena) || 0)
+      }, 0)
+
+      return (sum / attractions.value.length).toFixed(1)
+    })
+
+    const categoriesCount = computed(() => {
+      const categories = attractions.value.map(a => a.kategorija || "General")
+      return new Set(categories).size
+    })
+
     return {
       tab,
 
@@ -290,7 +309,9 @@ export default {
       pendingCount,
       statusColor,
       updateStatus,
-      deleteComment
+      deleteComment,
+      averageRating,
+      categoriesCount,
     }
   }
 }
