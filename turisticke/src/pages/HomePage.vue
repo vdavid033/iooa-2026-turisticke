@@ -1,6 +1,6 @@
 <template>
   <q-page class="bg-white" style="display: flex; flex-direction: column; min-height: calc(100vh - 100px) !important; padding: 0 !important; margin: 0 !important;">
-    
+
     <header class="hero-section text-white relative-position" style="background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) !important; min-height: 500px; width: 100%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
       <div class="absolute-full bg-pattern opacity-20"></div>
       <div class="relative-position max-w-7xl mx-auto px-md text-center">
@@ -21,7 +21,7 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-md py-xl" style="flex: 1; width: 100%;">
-      
+
       <router-view v-if="$route.path !== '/' && $route.path !== '/home'" />
 
       <div v-else>
@@ -34,13 +34,13 @@
         </div>
 
         <div class="row q-col-gutter-xl q-mb-xl">
-          <div 
-            v-for="attraction in attractions" 
-            :key="attraction.id_atrakcije" 
+          <div
+            v-for="attraction in attractions"
+            :key="attraction.id_atrakcije"
             class="col-12 col-sm-6 col-md-4"
           >
-            <q-card 
-              class="attraction-card shadow-15 hover-scale cursor-pointer" 
+            <q-card
+              class="attraction-card shadow-15 hover-scale cursor-pointer"
               @click="$router.push({ name: 'one_atraction', params: { id: attraction.id_atrakcije } })"
             >
               <q-img :src="attraction.slika" :ratio="16/9" class="rounded-borders">
@@ -115,7 +115,7 @@ onMounted(() => {
   background: linear-gradient(to right, #facc15, #a855f7) !important;
   border-radius: 10px;
   /* DODAJ OVE DVIJE LINIJE: */
-  display: block; 
+  display: block;
   margin: 0 auto !important;
 }
 

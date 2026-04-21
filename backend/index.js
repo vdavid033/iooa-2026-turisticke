@@ -159,7 +159,10 @@ app.post("/api/unos-slike", function (req, res) {
 
 //uzimanje podataka o atrakcijama
 //racunanje prosjecne ocjene
-app.get('/atrakcije', (req,res)=>{
+app.get('/atrakcije', (req, res) => {
+
+  const limit = parseInt(req.query.limit) || 100; // default ako nema limita
+
   dbConn.query(`
     SELECT 
       a.*, 
@@ -168,11 +171,11 @@ app.get('/atrakcije', (req,res)=>{
     LEFT JOIN Ocjena o 
       ON a.id_atrakcije = o.VK_ID_Atrakcije
     GROUP BY a.id_atrakcije
-  `, (err,result)=>{
-    if(err){
+    LIMIT ?
+  `, [limit], (err, result) => {
+    if (err) {
       res.send('error');
-    }else{
-      console.log(result);
+    } else {
       res.send(result);
     }
   });
@@ -250,7 +253,7 @@ app.get('/atrakcije/:id', function (request, response) {
     LEFT JOIN Ocjena o 
       ON a.id_atrakcije = o.VK_ID_Atrakcije
     WHERE a.id_atrakcije = ?
-    GROUP BY a.id_atrakcije
+    GROUP BY a.id_atrakcije;
   `, [id_atrakcije], function (error, results) {
     if (error) throw error;
 
