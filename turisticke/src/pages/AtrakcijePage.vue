@@ -19,8 +19,8 @@
                 <div class="row items-center q-gutter-sm q-mt-sm">
                   <q-icon name="place" size="xs" color="orange-4" />
                   <span class="text-subtitle1">{{ post.adresa }}</span>
-                  <q-rating :model-value="Number(post.prosjecna_ocjena)" readonly size="20px" color="orange-4" class="q-ml-md" />
-                  <span class="text-caption">({{ post.prosjecna_ocjena }} recenzija)</span>
+                  <q-rating :model-value="Number(post.avg_ocjena)" readonly size="20px" color="orange-4" class="q-ml-md" />
+                  <span class="text-caption">({{ post.avg_ocjena }} recenzija)</span>
                 </div>
 
                 <!-- Admin kontrole skrivene u gumbu na slici -->
@@ -79,7 +79,7 @@
                 <div class="text-h5 text-purple-9 text-weight-bold">Recenzije</div>
                 <div class="row items-center q-gutter-xs">
                   <q-icon name="star" color="orange-4" size="md" />
-                  <span class="text-h5 text-weight-bold">{{ post.prosjecna_ocjena }}</span>
+                  <span class="text-h5 text-weight-bold">{{ post.avg_ocjena }}</span>
                   <span class="text-grey-7">/ 5</span>
                 </div>
               </div>

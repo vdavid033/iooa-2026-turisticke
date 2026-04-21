@@ -172,6 +172,7 @@ app.get('/atrakcije', (req,res)=>{
     if(err){
       res.send('error');
     }else{
+      console.log(result);
       res.send(result);
     }
   });
@@ -239,22 +240,24 @@ app.get("/korisnici", function (request, response) {
 
 
 app.get('/atrakcije/:id', function (request, response) {
-    let id_atrakcije = request.params.id;
-    if (!id_atrakcije) {
-        return response.status(400).send({
-            error: true, 
-            
-            message: 'Unesite id_atrakcije'
-        });
-    }
-    dbConn.query('SELECT * FROM atrakcije where id_atrakcije=?', id_atrakcije, function
-        (error, results, fields) {
-        if (error) throw error;
-        return response.send({
-           data: results[0]
-                
-        });
+  let id_atrakcije = request.params.id;
+
+  dbConn.query(`
+    SELECT 
+      a.*, 
+      AVG(o.ocjena) AS avg_ocjena
+    FROM atrakcije a
+    LEFT JOIN Ocjena o 
+      ON a.id_atrakcije = o.VK_ID_Atrakcije
+    WHERE a.id_atrakcije = ?
+    GROUP BY a.id_atrakcije
+  `, [id_atrakcije], function (error, results) {
+    if (error) throw error;
+
+    return response.send({
+      data: results[0]
     });
+  });
 });
 
 
@@ -301,7 +304,7 @@ app.delete('/obrisi_atrakcije/:id', function (request, response){
 
 // Dodavanje ocjene za atrakciju u tablicu OCJENE
 app.post('/dodajOcjenuOcjene/:id', (req, res) => {
-  const data = [req.body.ocjena, req.params.id]; // use 'ocjena' instead of 'prosjecna_ocjena'
+  const data = [req.body.ocjena, req.params.id];
 
   dbConn.query(
     "INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES (?, ?)",
@@ -331,7 +334,7 @@ app.get('/atrakcijeProsjecneOcjene/:id', (req, res) => {
   })
 });
 
-
+/*
    // Dodavanje ocjene za atrakciju u tablicu OCJENE
  
    app.post('/dodajOcjenuOcjene/:id', (req, res) => {
@@ -345,7 +348,7 @@ app.get('/atrakcijeProsjecneOcjene/:id', (req, res) => {
       }
     })
   });
-
+*/ 
 
 
 
@@ -378,7 +381,7 @@ app.get('/atrakcijeProsjecneOcjene/:id', (req, res) => {
 
 
 
-
+/*
   app.delete('/obrisi_ocjenu_atrakcije/:id', function (request, response){
 
     
@@ -403,7 +406,7 @@ app.get('/atrakcijeProsjecneOcjene/:id', (req, res) => {
       return response.send({ error: false, data: results, message: 'ocjena atrakcija je obrisana ' });
     });
   });
-/*
+
   app.put('/dodaj_sliku_atrakcije/:id', function (request, response){
 
     

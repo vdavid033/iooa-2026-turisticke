@@ -47,7 +47,7 @@
                 <div class="absolute-top-right q-ma-sm" style="background: transparent">
                   <q-badge color="orange" text-color="white" class="q-pa-xs text-bold shadow-2">
                     <q-icon name="star" size="14px" class="q-mr-xs" />
-                    {{ attraction.prosjecna_ocjena ? attraction.prosjecna_ocjena.toFixed(1) : '0.0' }}
+                    {{ attraction.avg_ocjena ? attraction.avg_ocjena.toFixed(1) : '0.0' }}
                   </q-badge>
                 </div>
                 <div class="absolute-bottom text-h6 bg-black-opacity q-pa-sm">
