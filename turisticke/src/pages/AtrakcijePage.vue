@@ -99,14 +99,27 @@
                   </q-btn-dropdown>
                 </div>
 
-                <q-btn
-                  color="orange-4"
-                  text-color="black"
-                  label="Dodaj detaljan komentar"
-                  class="text-weight-bold q-px-lg"
-                  unelevated
-                  :to="'/komentari/' + trenutniID"
-                />
+                <q-input
+  v-model="komentar"
+  outlined
+  type="textarea"
+  autogrow
+  label="Dodaj detaljan komentar..."
+  class="q-mb-md"
+/>
+
+<q-btn
+  color="orange-4"
+  text-color="black"
+  label="Dodaj komentar"
+  class="text-weight-bold q-px-lg"
+  unelevated
+  @click="dodajKomentar(komentar, post.id_atrakcije)"
+/>
+
+<div v-if="message" class="text-positive q-mt-sm">
+  {{ message }}
+</div>
               </q-card>
 
               <!-- LISTA KOMENTARA -->
@@ -158,6 +171,8 @@ const comments = ref([])
 const name = ref("") // Za input linka slike
 const route = useRoute()
 const router = useRouter()
+const komentar = ref('')
+const message = ref('')
 
 const trenutniID = route.params.id
 
@@ -212,6 +227,28 @@ const deleteOcjena = async (id) => {
 onMounted(() => {
   getPosts()
 })
+
+
+const dodajKomentar = async (komentarTekst, id) => {
+  if (!komentarTekst) return;
+
+  try {
+    await api.post(`http://localhost:4200/dodajKomentar/${id}`, {
+      Komentar: komentarTekst
+    });
+
+
+    komentar.value = ''
+
+    // refresh komentara odmah
+    const komentari = await api.get(`/komentari/${id}`)
+    comments.value = komentari.data.data
+
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 </script>
 
 <style scoped>
