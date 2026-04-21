@@ -1,47 +1,82 @@
 <template>
-  <!-- <q-header elevated class="bg-deep-purple text-white"> -->
+  <q-page class="auth-page flex flex-center">
+    <div class="auth-hero-bg absolute-full">
+      <div class="absolute-full bg-pattern opacity-10"></div>
+    </div>
 
-  <q-tabs v-model="tab" class="bg-primary text-white ">
-    <q-tab name="Prijava" label="Prijava" @click.prevent="register = false" />
-    <q-tab name="Registracija" label="Registracija" @click.prevent="register = true" />
-  </q-tabs>
-  <!-- </q-header> -->
+    <q-card class="auth-card shadow-24">
+      <q-tabs
+        v-model="tab"
+        class="text-grey-7 q-mt-sm"
+        active-color="primary"
+        indicator-color="primary"
+        align="justify"
+        narrow-indicator
+      >
+        <q-tab name="Prijava" label="Prijava" @click="register = false" />
+        <q-tab name="Registracija" label="Registracija" @click="register = true" />
+      </q-tabs>
 
-  <q-card class="my-card">
-    <q-card-section>
-      <form @submit.prevent="onSubmit">
-        <div class="q-gutter-md full-with" style="max-width: 500px">
-          <div class="loginText" style="text-align: center">{{ tab }}</div>
+      <q-separator q-mx-md />
 
-          <q-input v-model="credentials.korisnicko_ime" outlined label="Korisničko ime" />
-          <div> </div>
-          <q-input v-model="credentials.lozinka" outlined type="password" label="Lozinka" />
-
-
-          <div class="row justify-between">
-            <q-btn class="bg-primary text-white" to="/">Odustani</q-btn>
-            <q-btn class="bg-primary text-white" type="submit">{{ tab }}</q-btn>
-          </div>
+      <q-card-section class="q-pa-xl">
+        <div class="text-h4 text-weight-bold text-primary text-center q-mb-md">
+          {{ tab }}
         </div>
+        <div class="divider-gradient q-mb-xl"></div>
 
-      </form>
-    </q-card-section>
-  </q-card>
+        <form @submit.prevent="onSubmit" class="q-gutter-y-lg">
+          <q-input
+            v-model="credentials.korisnicko_ime"
+            outlined
+            label="Korisničko ime"
+            color="purple-7"
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" color="primary" />
+            </template>
+          </q-input>
+
+          <q-input
+            v-model="credentials.lozinka"
+            outlined
+            type="password"
+            label="Lozinka"
+            color="purple-7"
+          >
+            <template v-slot:prepend>
+              <q-icon name="lock" color="primary" />
+            </template>
+          </q-input>
+
+          <div class="row q-col-gutter-md q-pt-md">
+            <div class="col-6">
+              <q-btn
+                flat
+                label="Odustani"
+                class="full-width q-py-sm btn-rounded text-grey-7"
+                to="/"
+              />
+            </div>
+            <div class="col-6">
+              <q-btn
+                unelevated
+                :label="tab"
+                class="full-width q-py-sm btn-rounded bg-gradient-btn text-white"
+                type="submit"
+              />
+            </div>
+          </div>
+        </form>
+      </q-card-section>
+    </q-card>
+  </q-page>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch } from "vue"
-//import { useStoreAuth } from "src/stores/storeAuth"
-
-
-/*
-store
-*/
-//const storeAuth = useStoreAuth()
-
-// Router i axios
 import axios from "axios"
-import { useRouter, useRoute, } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 
 const route = useRoute()
 const router = useRouter()
@@ -49,8 +84,11 @@ const router = useRouter()
 const register = ref(false)
 const tab = ref('Prijava')
 
+const credentials = reactive({
+  korisnicko_ime: '',
+  lozinka: ''
+})
 
-// Funkcija koja postavlja tab ovisno o URL parametru
 const updateTabFromRoute = () => {
   if (route.query.mode === 'register') {
     register.value = true
@@ -61,87 +99,78 @@ const updateTabFromRoute = () => {
   }
 }
 
-// Provjeri pri učitavanju
-onMounted(() => {
-  updateTabFromRoute()
-})
-
-// Prati promjene ako korisnik klikne "Prijava" pa odmah "Registracija" u toolbaru
-watch(() => route.query.mode, () => {
-  updateTabFromRoute()
-})
-
-
-/*
-credentials
-*/
-
-const credentials = reactive({
-  korisnicko_ime: '',
-  lozinka: ''
-})
-
-/*
-  submit
-*/
+onMounted(() => updateTabFromRoute())
+watch(() => route.query.mode, () => updateTabFromRoute())
 
 const onSubmit = async () => {
   if (!credentials.korisnicko_ime || !credentials.lozinka) {
     alert('Unesite korisničko ime i lozinku')
     return
   }
-
   try {
-    if (register.value) {
-      // Registracija
-      const res = await axios.post("http://localhost:4200/register", credentials)
+    const endpoint = register.value ? "/register" : "/login"
+    const res = await axios.post(`http://localhost:4200${endpoint}`, credentials)
 
-      if (res.data.success) {
-        alert("Registracija uspješna")
+    if (res.data.success) {
+      if (register.value) {
+        alert("Registracija uspješna! Sad se možete prijaviti.")
         register.value = false
         tab.value = "Prijava"
       } else {
-        alert(res.data.message)
-      }
-
-    } else {
-      // Login
-      const res = await axios.post("http://localhost:4200/login", credentials)
-
-      if (res.data.success) {
-        alert("Prijava uspješna")
-
         localStorage.setItem("user", JSON.stringify(res.data.user))
-
         router.push("/")
-      } else {
-        alert(res.data.message)
       }
+    } else {
+      alert(res.data.message)
     }
   } catch (err) {
-    console.error(err)
     alert("Greška na serveru")
   }
 }
-
 </script>
 
-<style lang="sass" scoped>
-.my-card
-    width: 100%
-    max-width: 400px
-    margin: 0 auto
-    margin-top: 40px
-    font-size: 36px
-    width: 100%
+<style lang="scss" scoped>
+.auth-page {
+  min-height: 100vh;
+  position: relative;
+}
 
+/* Fiksna ljubičasta gradijentna pozadina */
+.auth-hero-bg {
+  background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) !important;
+  z-index: 0;
+}
 
+.bg-pattern {
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE0YzMuMzEgMCA2IDIuNjkgNiA2cy0yLjY5IDYtNiA2LTYtMi42OS02LTYgMi42OS02IDYtNnpNNiAzNGMzLjMxIDAgNiAyLjY5IDYgNnMtMi42OSA2LTYgNi02LTIuNjktNi02IDIuNjktNiA2LTZ6TTM2IDM0YzMuMzEgMCA2IDIuNjkgNiA2cy0yLjY5IDYtNiA2LTYtMi42OS02LTYgMi42OS02IDYtNnoiLz48L2c+PC9nPjwvc3ZnPg==") !important;
+}
+
+.auth-card {
+  width: 90%;
+  max-width: 450px;
+  z-index: 10;
+  border-radius: 16px;
+  background: white;
+}
+
+.divider-gradient {
+  width: 80px;
+  height: 5px;
+  background: linear-gradient(to right, #facc15, #a855f7) !important;
+  border-radius: 10px;
+  margin: 0 auto;
+}
+
+.bg-gradient-btn {
+  background: linear-gradient(to right, #4f46e5, #7e22ce) !important;
+  transition: all 0.3s ease;
+  &:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-rounded {
+  border-radius: 10px;
+}
 </style>
-
-<!-- .loginText
-text-align: center
-font-size: 36px
-
-.input,  -->
-
-

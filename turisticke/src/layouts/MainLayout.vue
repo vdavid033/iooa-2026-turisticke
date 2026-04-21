@@ -201,3 +201,21 @@ export default defineComponent({
   },
 })
 </script>
+
+<style lang="scss">
+/* Koristimo globalni stil da pokrijemo sve praznine */
+.bg-main {
+  /* Postavljamo najtamniju boju iz tvog gradijenta kao bazu */
+  background-color: #4c1d95 !important;
+}
+
+/* Osiguravamo da i kontejner stranica ne forsira bijelu boju */
+.q-page-container {
+  background-color: transparent !important;
+}
+
+/* Ako želiš da cijela aplikacija ima taj gradijent kao fiksnu podlogu: */
+body {
+  background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) fixed !important;
+}
+</style>
