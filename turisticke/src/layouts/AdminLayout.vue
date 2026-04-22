@@ -31,10 +31,32 @@
 </template>
 
 <script setup>
-const logout = () => {
-  localStorage.removeItem("user")
-  location.reload()
-}
+  import { useRouter } from "vue-router"
+  import { Notify } from "quasar"
+
+  const router = useRouter()
+
+  const logout = () => {
+    try {
+      // obriši user session
+      localStorage.removeItem("user")
+
+      // notifikacija
+      Notify.create({
+        type: "positive",
+        message: "Uspješno ste se odjavili 👋"
+      })
+
+      // redirect na login
+      router.push("/auth")
+
+    } catch (error) {
+      Notify.create({
+        type: "negative",
+        message: "Greška prilikom odjave ❌"
+      })
+    }
+  }
 </script>
 
 <style scoped>
