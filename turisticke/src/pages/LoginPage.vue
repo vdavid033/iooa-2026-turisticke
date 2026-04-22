@@ -117,8 +117,15 @@ const onSubmit = async () => {
         register.value = false
         tab.value = "Prijava"
       } else {
-        localStorage.setItem("user", JSON.stringify(res.data.user))
-        router.push("/")
+       // Unutar onSubmit funkcije u Login.vue
+const user = res.data.user;
+localStorage.setItem("user", JSON.stringify(user));
+
+if (user.uloga === 'administrator') {
+  router.push("/admin"); // Vodi na admin stranicu
+} else {
+  router.push("/"); // Vodi na početnu za obične korisnike
+}
       }
     } else {
       alert(res.data.message)
@@ -135,7 +142,6 @@ const onSubmit = async () => {
   position: relative;
 }
 
-/* Fiksna ljubičasta gradijentna pozadina */
 .auth-hero-bg {
   background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) !important;
   z-index: 0;

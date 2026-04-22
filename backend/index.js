@@ -85,6 +85,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Login
+// Login
 app.post('/login', (req, res) => {
   const { korisnicko_ime, lozinka } = req.body;
 
@@ -92,19 +93,25 @@ app.post('/login', (req, res) => {
     "SELECT * FROM korisnici_test WHERE korisnicko_ime = ?",
     [korisnicko_ime],
     async (err, results) => {
-      if (err) return res.send(err);
+      if (err) return res.send({ success: false, message: "Greška u bazi" });
 
       if (results.length === 0) {
         return res.send({ success: false, message: "Korisnik ne postoji" });
       }
 
       const user = results[0];
-
-      // Usporedba lozinke
       const match = await bcrypt.compare(lozinka, user.lozinka);
 
       if (match) {
-        res.send({ success: true, user });
+        // ŠALJEMO PODATKE FRONTENDU
+        res.send({ 
+          success: true, 
+          user: {
+            id: user.id_korisnika, // ili kako se već zove tvoj ID stupac
+            korisnicko_ime: user.korisnicko_ime,
+            uloga: user.uloga // Ovdje će pisati 'korisnik' ili 'administrator'
+          } 
+        });
       } else {
         res.send({ success: false, message: "Pogrešna lozinka" });
       }
