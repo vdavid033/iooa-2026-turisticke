@@ -151,13 +151,13 @@
       </q-page>
     </q-page-container>
 
-    <!-- FOOTER (Tamni kao na slici) -->
-    <q-footer class="bg-blue-grey-10 q-pa-lg text-center">
+    <!-- FOOTER (Tamni kao na slici) 
+   <q-footer absolute class="bg-blue-grey-10 q-pa-lg text-center">
       <div class="text-subtitle2 text-blue-2">Otkrijte ljepotu Hrvatske na svoj način</div>
       <div class="text-caption text-blue-grey-4 q-mt-xs">
         © 2026 Hrvatska Turistička Atrakcija. Sva prava pridržana.
       </div>
-    </q-footer>
+    </q-footer>-->
   </q-layout>
 </template>
 

@@ -33,7 +33,7 @@
             class="q-px-lg text-weight-bold"
           />
 
-          <!-- Gumb Odjava (ako JE prijavljen) -->
+          <!-- Gumb Odjava (ako JE prijavlje  n) -->
           <q-btn
             v-else
             unelevated
@@ -209,7 +209,7 @@ export default defineComponent({
   background-color: #4c1d95 !important;
 }
 
-/* Osiguravamo da i kontejner stranica ne forsira bijelu boju */
+/* O siguravamo da i kontejner stranica ne forsira bijelu boju */
 .q-page-container {
   background-color: transparent !important;
 }
