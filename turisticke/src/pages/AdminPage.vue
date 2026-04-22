@@ -206,6 +206,7 @@
 <script>
 import { ref, onMounted, computed } from "vue"
 import axios from "axios"
+import { Notify } from "quasar"
 
 
 export default {
@@ -225,8 +226,23 @@ export default {
     }
 
     const deleteAttraction = async (id) => {
-      await axios.delete(`http://localhost:4200/obrisi_atrakcije/${id}`)
-      fetchAttractions()
+      try {
+        await axios.delete(`http://localhost:4200/obrisi_atrakcije/${id}`)
+
+        Notify.create({
+          type: "positive",
+          message: "Atrakcija uspješno obrisana ✅"
+        })
+
+        fetchAttractions()
+
+      } catch (error) {
+        Notify.create({
+          type: "negative",
+          message: "Greška pri brisanju atrakcije ❌"
+        })
+        console.error(error)
+      }
     }
 
     // =====================
@@ -259,17 +275,46 @@ export default {
     // AKCIJE
     // =====================
     const updateStatus = async (comment, status) => {
-      if (status === "approved") {
-        await axios.put(`http://localhost:4200/komentari/approve/${comment.ID_komentara}`)
-      } else {
-        await axios.put(`http://localhost:4200/komentari/reject/${comment.ID_komentara}`)
+      try {
+        if (status === "approved") {
+          await axios.put(`http://localhost:4200/komentari/approve/${comment.ID_komentara}`)
+        } else {
+          await axios.put(`http://localhost:4200/komentari/reject/${comment.ID_komentara}`)
+        }
+
+        Notify.create({
+          type: "info",
+          message: `Komentar ${status === "approved" ? "odobren" : "odbijen"}`
+        })
+
+        fetchComments()
+
+      } catch (error) {
+        Notify.create({
+          type: "negative",
+          message: "Greška pri ažuriranju komentara ❌"
+        })
       }
-      fetchComments()
     }
 
     const deleteComment = async (id) => {
-      await axios.delete(`http://localhost:4200/obrisi_komentar/${id}`)
-      fetchComments()
+      try {
+        await axios.delete(`http://localhost:4200/obrisi_komentar/${id}`)
+
+        Notify.create({
+          type: "positive",
+          message: "Komentar obrisan 🗑️"
+        })
+
+        fetchComments()
+
+      } catch (error) {
+        Notify.create({
+          type: "negative",
+          message: "Greška pri brisanju komentara ❌"
+        })
+        console.error(error)
+      }
     }
 
     // =====================
