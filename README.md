@@ -2,7 +2,7 @@
   <img src="./turisticke/public/gif.gif" width="260" alt="Tourist Attractions"/>
 </p>
 
-<h1 align="center">Tourist Attractions</h1>
+<h1 align="center">Tourist attractions</h1>
 
 <p align="center">
 Full-stack web application for discovering, managing and interacting with tourist attractions, with AI chatbot integration.
@@ -14,17 +14,19 @@ Armin Lišić · Ivan Gržetić
 
 ---
 
-## Overview
-
-Tourist Attractions is a full-stack application built with separated frontend and backend architecture.
+<h2 align="center">Overview</h2>
 
 <p align="center">
-User Authentication • Attractions Management • MySQL Database • Interactive Maps • AI Chatbot
+User authentication • Attractions Management • MySQL Database • Interactive Maps • AI Chatbot
+</p>
+
+<p align="center">
+Tourist attractions is a full-stack application built with separated frontend and backend architecture.
 </p>
 
 ---
 
-## Technology Stack
+<h2 align="center">Technology stack</h2>
 
 <table align="center">
 <tr>
@@ -40,9 +42,9 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 </tr>
 
 <tr>
-<td align="center">Quasar Framework</td>
+<td align="center">Quasar framework</td>
 <td align="center">Express</td>
-<td align="center">SSE Streaming</td>
+<td align="center">SSE streaming</td>
 </tr>
 
 <tr>
@@ -53,7 +55,7 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 
 <tr>
 <td align="center">Axios</td>
-<td align="center">JWT Authentication</td>
+<td align="center">JWT authentication</td>
 <td align="center">ESLint</td>
 </tr>
 
@@ -70,7 +72,7 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 </tr>
 
 <tr>
-<td align="center">Image Compression</td>
+<td align="center">Image compression</td>
 <td align="center">CORS</td>
 <td align="center">Git</td>
 </tr>
@@ -79,7 +81,7 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 
 ---
 
-## Features
+<h2 align="center">Features</h2>
 
 <table align="center">
 <tr>
@@ -89,40 +91,40 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 </tr>
 
 <tr>
-<td align="center">User Login</td>
-<td align="center">Add Attractions</td>
+<td align="center">User login</td>
+<td align="center">Add attractions</td>
 <td align="center">AI Chatbot</td>
 </tr>
 
 <tr>
 <td align="center">Registration</td>
-<td align="center">Delete Attractions</td>
-<td align="center">Streaming Responses</td>
+<td align="center">Delete attractions</td>
+<td align="center">Streaming responses</td>
 </tr>
 
 <tr>
-<td align="center">JWT Access</td>
-<td align="center">User Attractions</td>
-<td align="center">Markdown Support</td>
+<td align="center">JWT access</td>
+<td align="center">User attractions</td>
+<td align="center">Markdown support</td>
 </tr>
 
 <tr>
-<td align="center">Role Authorization</td>
+<td align="center">Role authorization</td>
 <td align="center">Comments</td>
-<td align="center">Map Integration</td>
+<td align="center">Map integration</td>
 </tr>
 
 <tr>
-<td align="center">Session Tokens</td>
+<td align="center">Session tokens</td>
 <td align="center">Ratings</td>
-<td align="center">Image Upload</td>
+<td align="center">Image upload</td>
 </tr>
 
 </table>
 
 ---
 
-## Project Structure
+<h2 align="center">Project structure</h2>
 
 <table align="center">
 <tr>
@@ -154,7 +156,7 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 
 ---
 
-## Requirements
+<h2 align="center">Requirements</h2>
 
 <table align="center">
 <tr>
@@ -208,36 +210,36 @@ ollama --version
 ---
 
 <details>
-<summary><b>Installation Instructions</b></summary>
+<summary><b>Installation instructions</b></summary>
 
-## Clone
+### Clone
 
 ```bash
 git clone <repository-url>
 cd iooa-2026-turisticke-team_nexora
 ```
 
-## Install Backend
+### Install backend
 
 ```bash
 cd backend
 npm install
 ```
 
-## Install Frontend
+### Install frontend
 
 ```bash
 cd ../turisticke
 npm install
 ```
 
-## Install Quasar
+### Install Quasar
 
 ```bash
 npm install -g @quasar/cli
 ```
 
-## Install Ollama
+### Install Ollama
 
 Download:
 
@@ -279,7 +281,7 @@ DB_NAME=turisticke
 
 ---
 
-## Running the Project
+<h2 align="center">Running the project</h2>
 
 ### Backend
 
@@ -288,16 +290,12 @@ cd backend
 node index.js
 ```
 
----
-
 ### Frontend
 
 ```bash
 cd turisticke
 npx quasar dev
 ```
-
----
 
 ### Start Ollama
 
@@ -307,7 +305,7 @@ ollama serve
 
 ---
 
-## Start Order
+<h2 align="center">Start order</h2>
 
 <table align="center">
 <tr>
@@ -347,28 +345,9 @@ ollama serve
 <details>
 <summary><b>Troubleshooting</b></summary>
 
-### Missing modules
-
 ```bash
 npm install
-```
-
-### Quasar not recognized
-
-```bash
 npm install -g @quasar/cli
-```
-
-### MySQL errors
-
-Check:
-- credentials
-- database exists
-- service running
-
-### Chatbot issues
-
-```bash
 ollama serve
 ollama list
 ```
@@ -378,7 +357,7 @@ ollama list
 ---
 
 <details>
-<summary><b>Useful Commands</b></summary>
+<summary><b>Useful commands</b></summary>
 
 <table align="center">
 <tr>
@@ -392,7 +371,7 @@ ollama list
 </tr>
 
 <tr>
-<td align="center">List dependencies</td>
+<td align="center">Dependencies</td>
 <td align="center">npm list --depth=0</td>
 </tr>
 
@@ -417,7 +396,7 @@ ollama list
 
 ---
 
-## Authors
+<h2 align="center">Authors</h2>
 
 <p align="center">
 <strong>Armin Lišić</strong><br>
