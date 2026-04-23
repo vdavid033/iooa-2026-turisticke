@@ -26,50 +26,174 @@ User Authentication • Attractions Management • MySQL Database • Interactiv
 
 ## Technology Stack
 
-| Frontend | Backend | AI / Development |
-|:--------:|:-------:|:----------------:|
-| Vue 3 | Node.js | Ollama |
-| Quasar Framework | Express | SSE Streaming |
-| Vue Router | MySQL | Nodemon |
-| Axios | JWT Authentication | ESLint |
-| Leaflet | bcryptjs | Prettier |
-| Markdown-it | Multer | Vite |
-| Image Compression | CORS | Git |
+<table align="center">
+<tr>
+<th>Frontend</th>
+<th>Backend</th>
+<th>AI / Development</th>
+</tr>
+
+<tr>
+<td align="center">Vue 3</td>
+<td align="center">Node.js</td>
+<td align="center">Ollama</td>
+</tr>
+
+<tr>
+<td align="center">Quasar Framework</td>
+<td align="center">Express</td>
+<td align="center">SSE Streaming</td>
+</tr>
+
+<tr>
+<td align="center">Vue Router</td>
+<td align="center">MySQL</td>
+<td align="center">Nodemon</td>
+</tr>
+
+<tr>
+<td align="center">Axios</td>
+<td align="center">JWT Authentication</td>
+<td align="center">ESLint</td>
+</tr>
+
+<tr>
+<td align="center">Leaflet</td>
+<td align="center">bcryptjs</td>
+<td align="center">Prettier</td>
+</tr>
+
+<tr>
+<td align="center">Markdown-it</td>
+<td align="center">Multer</td>
+<td align="center">Vite</td>
+</tr>
+
+<tr>
+<td align="center">Image Compression</td>
+<td align="center">CORS</td>
+<td align="center">Git</td>
+</tr>
+
+</table>
 
 ---
 
 ## Features
 
-| Authentication | Attractions | AI / Interaction |
-|:--------------:|:-----------:|:----------------:|
-| User Login | Add Attractions | AI Chatbot |
-| Registration | Delete Attractions | Streaming Responses |
-| JWT Access | User Attractions | Markdown Support |
-| Role Authorization | Comments | Map Integration |
-| Session Tokens | Ratings | Image Upload |
+<table align="center">
+<tr>
+<th>Authentication</th>
+<th>Attractions</th>
+<th>AI / Interaction</th>
+</tr>
+
+<tr>
+<td align="center">User Login</td>
+<td align="center">Add Attractions</td>
+<td align="center">AI Chatbot</td>
+</tr>
+
+<tr>
+<td align="center">Registration</td>
+<td align="center">Delete Attractions</td>
+<td align="center">Streaming Responses</td>
+</tr>
+
+<tr>
+<td align="center">JWT Access</td>
+<td align="center">User Attractions</td>
+<td align="center">Markdown Support</td>
+</tr>
+
+<tr>
+<td align="center">Role Authorization</td>
+<td align="center">Comments</td>
+<td align="center">Map Integration</td>
+</tr>
+
+<tr>
+<td align="center">Session Tokens</td>
+<td align="center">Ratings</td>
+<td align="center">Image Upload</td>
+</tr>
+
+</table>
 
 ---
 
 ## Project Structure
 
-| Folder | Purpose |
-|:------:|:--------|
-| backend | Express API and database logic |
-| turisticke | Vue + Quasar frontend |
-| src | Application source |
-| public | Static assets |
+<table align="center">
+<tr>
+<th>Folder</th>
+<th>Purpose</th>
+</tr>
+
+<tr>
+<td align="center">backend</td>
+<td align="center">Express API and database logic</td>
+</tr>
+
+<tr>
+<td align="center">turisticke</td>
+<td align="center">Vue + Quasar frontend</td>
+</tr>
+
+<tr>
+<td align="center">src</td>
+<td align="center">Application source</td>
+</tr>
+
+<tr>
+<td align="center">public</td>
+<td align="center">Static assets</td>
+</tr>
+
+</table>
 
 ---
 
 ## Requirements
 
-| Software | Required | Version |
-|:--------:|:--------:|:-------:|
-| Node.js | Yes | 18+ |
-| npm | Yes | Latest |
-| MySQL | Yes | Stable |
-| Quasar CLI | Yes | Latest |
-| Ollama | For chatbot | Latest |
+<table align="center">
+<tr>
+<th>Software</th>
+<th>Required</th>
+<th>Version</th>
+</tr>
+
+<tr>
+<td align="center">Node.js</td>
+<td align="center">Yes</td>
+<td align="center">18+</td>
+</tr>
+
+<tr>
+<td align="center">npm</td>
+<td align="center">Yes</td>
+<td align="center">Latest</td>
+</tr>
+
+<tr>
+<td align="center">MySQL</td>
+<td align="center">Yes</td>
+<td align="center">Stable</td>
+</tr>
+
+<tr>
+<td align="center">Quasar CLI</td>
+<td align="center">Yes</td>
+<td align="center">Latest</td>
+</tr>
+
+<tr>
+<td align="center">Ollama</td>
+<td align="center">Chatbot</td>
+<td align="center">Latest</td>
+</tr>
+
+</table>
 
 Check versions:
 
@@ -86,28 +210,28 @@ ollama --version
 <details>
 <summary><b>Installation Instructions</b></summary>
 
-## Clone Repository
+## Clone
 
 ```bash
 git clone <repository-url>
 cd iooa-2026-turisticke-team_nexora
 ```
 
-## Install Backend Dependencies
+## Install Backend
 
 ```bash
 cd backend
 npm install
 ```
 
-## Install Frontend Dependencies
+## Install Frontend
 
 ```bash
 cd ../turisticke
 npm install
 ```
 
-## Install Quasar CLI
+## Install Quasar
 
 ```bash
 npm install -g @quasar/cli
@@ -115,7 +239,7 @@ npm install -g @quasar/cli
 
 ## Install Ollama
 
-Download and install:
+Download:
 
 https://ollama.com/download
 
@@ -131,14 +255,6 @@ Pull model:
 ollama pull llama3
 ```
 
-Note:
-
-The chatbot feature requires:
-
-- Ollama installed
-- Ollama running
-- Downloaded model
-
 </details>
 
 ---
@@ -146,13 +262,11 @@ The chatbot feature requires:
 <details>
 <summary><b>Database Setup</b></summary>
 
-Create database:
-
 ```sql
 CREATE DATABASE turisticke;
 ```
 
-Example connection:
+Example:
 
 ```env
 DB_HOST=localhost
@@ -160,8 +274,6 @@ DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=turisticke
 ```
-
-Adjust according to your local setup.
 
 </details>
 
@@ -187,42 +299,48 @@ npx quasar dev
 
 ---
 
-### Start Ollama (Optional)
+### Start Ollama
 
 ```bash
 ollama serve
-```
-
-If model is missing:
-
-```bash
-ollama pull llama3
 ```
 
 ---
 
 ## Start Order
 
-| Step | Service | Command |
-|:---:|:--------|:--------|
-| 1 | MySQL | Start MySQL Server |
-| 2 | Ollama | ollama serve |
-| 3 | Backend | node index.js |
-| 4 | Frontend | npx quasar dev |
+<table align="center">
+<tr>
+<th>Step</th>
+<th>Service</th>
+<th>Command</th>
+</tr>
 
----
+<tr>
+<td align="center">1</td>
+<td align="center">MySQL</td>
+<td align="center">Start MySQL Server</td>
+</tr>
 
-## Main Dependencies
+<tr>
+<td align="center">2</td>
+<td align="center">Ollama</td>
+<td align="center">ollama serve</td>
+</tr>
 
-| Backend | Frontend |
-|:-------:|:--------:|
-| express | vue |
-| mysql | quasar |
-| jsonwebtoken | vue-router |
-| bcryptjs | axios |
-| multer | leaflet |
-| cors | markdown-it |
-| body-parser | browser-image-compression |
+<tr>
+<td align="center">3</td>
+<td align="center">Backend</td>
+<td align="center">node index.js</td>
+</tr>
+
+<tr>
+<td align="center">4</td>
+<td align="center">Frontend</td>
+<td align="center">npx quasar dev</td>
+</tr>
+
+</table>
 
 ---
 
@@ -235,37 +353,23 @@ ollama pull llama3
 npm install
 ```
 
----
-
 ### Quasar not recognized
 
 ```bash
 npm install -g @quasar/cli
 ```
 
----
-
-### MySQL connection problems
+### MySQL errors
 
 Check:
+- credentials
+- database exists
+- service running
 
-- Database credentials
-- Database exists
-- MySQL service is running
-
----
-
-### Chatbot not responding
-
-Check:
+### Chatbot issues
 
 ```bash
 ollama serve
-```
-
-Verify model exists:
-
-```bash
 ollama list
 ```
 
@@ -276,16 +380,38 @@ ollama list
 <details>
 <summary><b>Useful Commands</b></summary>
 
-| Purpose | Command |
-|:--------|:--------|
-| Install packages | npm install |
-| List dependencies | npm list --depth=0 |
-| Run frontend | npx quasar dev |
-| Run backend | node index.js |
-| Run Ollama | ollama serve |
-| Lint code | npm run lint |
-| Format code | npm run format |
-| Quasar info | quasar info |
+<table align="center">
+<tr>
+<th>Purpose</th>
+<th>Command</th>
+</tr>
+
+<tr>
+<td align="center">Install packages</td>
+<td align="center">npm install</td>
+</tr>
+
+<tr>
+<td align="center">List dependencies</td>
+<td align="center">npm list --depth=0</td>
+</tr>
+
+<tr>
+<td align="center">Run frontend</td>
+<td align="center">npx quasar dev</td>
+</tr>
+
+<tr>
+<td align="center">Run backend</td>
+<td align="center">node index.js</td>
+</tr>
+
+<tr>
+<td align="center">Run Ollama</td>
+<td align="center">ollama serve</td>
+</tr>
+
+</table>
 
 </details>
 
