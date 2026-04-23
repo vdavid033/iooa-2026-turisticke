@@ -16,18 +16,11 @@ Armin Lišić · Ivan Gržetić
 
 ## Overview
 
-Tourist Attractions is a full-stack application built with a separated frontend and backend architecture.
+Tourist Attractions is a full-stack application built with separated frontend and backend architecture.
 
-It provides:
-
-- user authentication
-- tourist attraction management
-- comments and ratings
-- image uploads
-- map-based interaction
-- AI chatbot powered by Ollama
-
-The system combines Vue + Quasar on the frontend with Node.js, Express and MySQL on the backend.
+<p align="center">
+User Authentication • Attractions Management • MySQL Database • Interactive Maps • AI Chatbot
+</p>
 
 ---
 
@@ -36,9 +29,9 @@ The system combines Vue + Quasar on the frontend with Node.js, Express and MySQL
 | Frontend | Backend | AI / Development |
 |:--------:|:-------:|:----------------:|
 | Vue 3 | Node.js | Ollama |
-| Quasar | Express | SSE Streaming |
+| Quasar Framework | Express | SSE Streaming |
 | Vue Router | MySQL | Nodemon |
-| Axios | JWT | ESLint |
+| Axios | JWT Authentication | ESLint |
 | Leaflet | bcryptjs | Prettier |
 | Markdown-it | Multer | Vite |
 | Image Compression | CORS | Git |
@@ -47,47 +40,36 @@ The system combines Vue + Quasar on the frontend with Node.js, Express and MySQL
 
 ## Features
 
-- User registration and login
-- Role-based authorization
-- Add tourist attractions
-- Delete attractions
-- View personal attractions
-- Comments
-- Ratings
-- Map location selection
-- Image uploads
-- Markdown support
-- AI chatbot
-- Streaming responses
+| Authentication | Attractions | AI / Interaction |
+|:--------------:|:-----------:|:----------------:|
+| User Login | Add Attractions | AI Chatbot |
+| Registration | Delete Attractions | Streaming Responses |
+| JWT Access | User Attractions | Markdown Support |
+| Role Authorization | Comments | Map Integration |
+| Session Tokens | Ratings | Image Upload |
 
 ---
 
 ## Project Structure
 
-```text
-iooa-2026-turisticke-team_nexora/
-
-├── backend/
-│   ├── index.js
-│   └── package.json
-
-└── turisticke/
-    ├── src/
-    ├── public/
-    └── package.json
-```
+| Folder | Purpose |
+|:------:|:--------|
+| backend | Express API and database logic |
+| turisticke | Vue + Quasar frontend |
+| src | Application source |
+| public | Static assets |
 
 ---
 
-# Requirements
+## Requirements
 
-Install:
-
-- Node.js 18+
-- npm
-- MySQL Server
-- Quasar CLI
-- Ollama (optional for chatbot)
+| Software | Required | Version |
+|:--------:|:--------:|:-------:|
+| Node.js | Yes | 18+ |
+| npm | Yes | Latest |
+| MySQL | Yes | Stable |
+| Quasar CLI | Yes | Latest |
+| Ollama | For chatbot | Latest |
 
 Check versions:
 
@@ -96,54 +78,54 @@ node -v
 npm -v
 mysql --version
 quasar -v
+ollama --version
 ```
 
 ---
 
-# Installation
+<details>
+<summary><b>Installation Instructions</b></summary>
 
-Clone repository:
+## Clone Repository
 
 ```bash
 git clone <repository-url>
 cd iooa-2026-turisticke-team_nexora
 ```
 
-Install backend packages:
+## Install Backend Dependencies
 
 ```bash
 cd backend
 npm install
 ```
 
-Install frontend packages:
+## Install Frontend Dependencies
 
 ```bash
 cd ../turisticke
 npm install
 ```
 
-Install Quasar CLI globally:
+## Install Quasar CLI
 
 ```bash
 npm install -g @quasar/cli
 ```
 
----
+## Install Ollama
 
-## Install Ollama (Optional for AI Chatbot)
-
-Download and install Ollama from the official website:
+Download and install:
 
 https://ollama.com/download
 
-Verify installation:
+Verify:
 
 ```bash
 ollama --version
 ```
 
-Pull a model (example):
+Pull model:
 
 ```bash
 ollama pull llama3
@@ -151,25 +133,26 @@ ollama pull llama3
 
 Note:
 
-The chatbot feature requires both:
-- Ollama installed and running
-- a downloaded model (for example llama3)
+The chatbot feature requires:
+
+- Ollama installed
+- Ollama running
+- Downloaded model
+
+</details>
 
 ---
 
----
+<details>
+<summary><b>Database Setup</b></summary>
 
-# Database
-
-Create MySQL database:
+Create database:
 
 ```sql
 CREATE DATABASE turisticke;
 ```
 
-Configure connection inside backend.
-
-Example:
+Example connection:
 
 ```env
 DB_HOST=localhost
@@ -178,11 +161,15 @@ DB_PASSWORD=your_password
 DB_NAME=turisticke
 ```
 
+Adjust according to your local setup.
+
+</details>
+
 ---
 
-# Running the Project
+## Running the Project
 
-## Start backend
+### Backend
 
 ```bash
 cd backend
@@ -191,7 +178,7 @@ node index.js
 
 ---
 
-## Start frontend
+### Frontend
 
 ```bash
 cd turisticke
@@ -200,13 +187,13 @@ npx quasar dev
 
 ---
 
-## Start Ollama (optional)
+### Start Ollama (Optional)
 
 ```bash
 ollama serve
 ```
 
-Pull model if needed:
+If model is missing:
 
 ```bash
 ollama pull llama3
@@ -214,49 +201,35 @@ ollama pull llama3
 
 ---
 
-# Start Order
+## Start Order
 
-Recommended order:
-
-1. MySQL
-2. Ollama
-3. Backend
-4. Frontend
-
----
-
-# Main Dependencies
-
-## Backend
-
-```bash
-express
-mysql
-jsonwebtoken
-bcryptjs
-multer
-cors
-axios
-body-parser
-```
-
-## Frontend
-
-```bash
-vue
-quasar
-vue-router
-axios
-leaflet
-markdown-it
-browser-image-compression
-```
+| Step | Service | Command |
+|:---:|:--------|:--------|
+| 1 | MySQL | Start MySQL Server |
+| 2 | Ollama | ollama serve |
+| 3 | Backend | node index.js |
+| 4 | Frontend | npx quasar dev |
 
 ---
 
-# Troubleshooting
+## Main Dependencies
 
-## Missing modules
+| Backend | Frontend |
+|:-------:|:--------:|
+| express | vue |
+| mysql | quasar |
+| jsonwebtoken | vue-router |
+| bcryptjs | axios |
+| multer | leaflet |
+| cors | markdown-it |
+| body-parser | browser-image-compression |
+
+---
+
+<details>
+<summary><b>Troubleshooting</b></summary>
+
+### Missing modules
 
 ```bash
 npm install
@@ -264,7 +237,7 @@ npm install
 
 ---
 
-## Quasar not recognized
+### Quasar not recognized
 
 ```bash
 npm install -g @quasar/cli
@@ -272,17 +245,17 @@ npm install -g @quasar/cli
 
 ---
 
-## MySQL connection error
+### MySQL connection problems
 
 Check:
 
-- DB credentials
-- database exists
-- MySQL service running
+- Database credentials
+- Database exists
+- MySQL service is running
 
 ---
 
-## Chatbot not responding
+### Chatbot not responding
 
 Check:
 
@@ -290,37 +263,37 @@ Check:
 ollama serve
 ```
 
----
-
-# Useful Commands
-
-List installed dependencies:
+Verify model exists:
 
 ```bash
-npm list --depth=0
+ollama list
 ```
 
-Check Quasar info:
-
-```bash
-quasar info
-```
-
-Lint frontend:
-
-```bash
-npm run lint
-```
-
-Format code:
-
-```bash
-npm run format
-```
+</details>
 
 ---
 
-# Authors
+<details>
+<summary><b>Useful Commands</b></summary>
 
-**Armin Lišić**  
-**Ivan Gržetić**
+| Purpose | Command |
+|:--------|:--------|
+| Install packages | npm install |
+| List dependencies | npm list --depth=0 |
+| Run frontend | npx quasar dev |
+| Run backend | node index.js |
+| Run Ollama | ollama serve |
+| Lint code | npm run lint |
+| Format code | npm run format |
+| Quasar info | quasar info |
+
+</details>
+
+---
+
+## Authors
+
+<p align="center">
+<strong>Armin Lišić</strong><br>
+Ivan Gržetić
+</p>
