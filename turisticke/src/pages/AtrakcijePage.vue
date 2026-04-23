@@ -153,7 +153,7 @@ export default {
           return;
         }
 
-        const params = new URLSearchParams({ id_korisnika });
+        const params = new URLSearchParams({ id_korisnik: id_korisnika });
 
         const response = await api.get(`atrakcije?${params}`, {
           headers: {
@@ -161,7 +161,7 @@ export default {
           },
         });
 
-        posts.value = response.data;
+        posts.value = response.data.data || [];
       } catch (error) {
         console.error("Error fetching posts:", error);
       }

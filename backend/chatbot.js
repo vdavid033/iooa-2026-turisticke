@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 
 const OLLAMA_URL = "http://localhost:11434/api/chat";
-const OLLAMA_MODEL = "llama3.1:8b";
+const OLLAMA_MODEL = "llama3.2:3b";
 const MAX_HISTORY_MESSAGES = 20;
 const NON_STREAM_TIMEOUT_MS = 60000;
 
@@ -35,71 +35,487 @@ function createChatbotRouter({ queryAsync }) {
     return String(value).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   }
 
-  function shorten(value, max = 300) {
+  function shorten(value, max = 350) {
     if (typeof value !== "string") return value;
     return value.length > max ? `${value.slice(0, max)}...` : value;
   }
 
+  function normalizeText(value = "") {
+    return String(value)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function extractKeywords(message = "") {
+    const stopWords = new Set([
+      "koje",
+      "koji",
+      "koja",
+      "kojeg",
+      "kojim",
+      "kojoj",
+      "imate",
+      "imamo",
+      "imas",
+      "ima",
+      "atrakcije",
+      "atrakcija",
+      "preporuci",
+      "preporuka",
+      "molim",
+      "zelim",
+      "trebam",
+      "reci",
+      "daj",
+      "daj mi",
+      "gdje",
+      "sto",
+      "šta",
+      "sta",
+      "za",
+      "od",
+      "do",
+      "na",
+      "u",
+      "po",
+      "s",
+      "sa",
+      "su",
+      "je",
+      "li",
+      "mi",
+      "me",
+      "se",
+      "te",
+      "to",
+      "ovo",
+      "ono",
+      "neka",
+      "neki",
+      "neku",
+      "najbolje",
+      "top",
+      "komentari",
+      "komentar",
+      "ocjena",
+      "ocjene",
+      "slike",
+      "slika",
+      "prirodne",
+      "povijesne",
+      "lokacije",
+      "lokacija",
+      "znamenitosti",
+      "izlet",
+      "izlete",
+    ]);
+
+    return normalizeText(message)
+      .split(" ")
+      .map((word) => word.trim())
+      .filter((word) => word.length >= 3 && !stopWords.has(word))
+      .slice(0, 8);
+  }
+
+  function detectIntent(message = "") {
+    const text = normalizeText(message);
+
+    if (
+      text.includes("komentar") ||
+      text.includes("komentari") ||
+      text.includes("sto ljudi kazu") ||
+      text.includes("što ljudi kažu") ||
+      text.includes("misljenje") ||
+      text.includes("mišljenje")
+    ) {
+      return "comments";
+    }
+
+    if (
+      text.includes("najbolje") ||
+      text.includes("top") ||
+      text.includes("najvisa ocjena") ||
+      text.includes("najviša ocjena") ||
+      text.includes("najbolje ocijenjene") ||
+      text.includes("najbolje ocenjene")
+    ) {
+      return "top";
+    }
+
+    if (
+      text.includes("slika") ||
+      text.includes("slike") ||
+      text.includes("fotograf") ||
+      text.includes("fotke")
+    ) {
+      return "images";
+    }
+
+    if (
+      text.includes("gdje") ||
+      text.includes("u ") ||
+      text.includes("na adresi") ||
+      text.includes("u blizini") ||
+      text.includes("lokacija")
+    ) {
+      return "location";
+    }
+
+    if (
+      text.includes("koje atrakcije") ||
+      text.includes("sto imate") ||
+      text.includes("što imate") ||
+      text.includes("popis atrakcija") ||
+      text.includes("sve atrakcije")
+    ) {
+      return "all";
+    }
+
+    return "search";
+  }
+
+  async function getAllAttractions(limit = 20) {
+    const rows = await queryAsync(
+      `
+      SELECT 
+        id_atrakcije,
+        naziv,
+        opis,
+        adresa,
+        prosjecna_ocjena,
+        geografska_sirina,
+        geografska_duzina
+      FROM atrakcije
+      ORDER BY id_atrakcije DESC
+      LIMIT ?
+      `,
+      [limit]
+    );
+
+    return rows || [];
+  }
+
+  async function getTopAttractions(limit = 5) {
+    const rows = await queryAsync(
+      `
+      SELECT 
+        id_atrakcije,
+        naziv,
+        opis,
+        adresa,
+        prosjecna_ocjena,
+        geografska_sirina,
+        geografska_duzina
+      FROM atrakcije
+      ORDER BY COALESCE(prosjecna_ocjena, 0) DESC, naziv ASC
+      LIMIT ?
+      `,
+      [limit]
+    );
+
+    return rows || [];
+  }
+
+  async function searchAttractionsByMessage(message, limit = 10) {
+    const keywords = extractKeywords(message);
+
+    if (!keywords.length) {
+      return getAllAttractions(limit);
+    }
+
+    const whereParts = [];
+    const params = [];
+
+    for (const keyword of keywords) {
+      const like = `%${keyword}%`;
+      whereParts.push(`(naziv LIKE ? OR opis LIKE ? OR adresa LIKE ?)`);
+      params.push(like, like, like);
+    }
+
+    params.push(limit);
+
+    const sql = `
+      SELECT 
+        id_atrakcije,
+        naziv,
+        opis,
+        adresa,
+        prosjecna_ocjena,
+        geografska_sirina,
+        geografska_duzina
+      FROM atrakcije
+      WHERE ${whereParts.join(" OR ")}
+      ORDER BY COALESCE(prosjecna_ocjena, 0) DESC, naziv ASC
+      LIMIT ?
+    `;
+
+    const rows = await queryAsync(sql, params);
+    return rows || [];
+  }
+
+  async function findBestMatchingAttraction(message) {
+    const matches = await searchAttractionsByMessage(message, 1);
+    return matches[0] || null;
+  }
+
+  async function getCommentsForAttractionId(attractionId, limit = 5) {
+    if (!attractionId) return [];
+
+    const rows = await queryAsync(
+      `
+      SELECT 
+        ID_komentara,
+        Komentar
+      FROM Komentari
+      WHERE VK_ID_atrakcije = ?
+      ORDER BY ID_komentara DESC
+      LIMIT ?
+      `,
+      [attractionId, limit]
+    );
+
+    return rows || [];
+  }
+
+  async function getRatingsForAttractionId(attractionId) {
+    if (!attractionId) return [];
+
+    const rows = await queryAsync(
+      `
+      SELECT 
+        id_ocjene,
+        ocjena
+      FROM Ocjena
+      WHERE VK_ID_Atrakcije = ?
+      ORDER BY id_ocjene DESC
+      LIMIT 10
+      `,
+      [attractionId]
+    );
+
+    return rows || [];
+  }
+
+  async function getImagesForAttractionId(attractionId) {
+    if (!attractionId) return [];
+
+    const rows = await queryAsync(
+      `
+      SELECT 
+        id_slike,
+        id_atrakcije_s
+      FROM slike
+      WHERE id_atrakcije_s = ?
+      ORDER BY id_slike DESC
+      LIMIT 10
+      `,
+      [attractionId]
+    );
+
+    return rows || [];
+  }
+
   function buildAttractionsContext(attractions) {
     if (!Array.isArray(attractions) || attractions.length === 0) {
-      return "Trenutno nema dostupnih atrakcija u bazi.";
+      return "Nema pronađenih atrakcija u bazi za ovaj upit.";
     }
 
     return attractions
-      .map((item) =>
+      .map((item, index) =>
         [
+          `${index + 1}. atrakcija`,
           `ID: ${item.id_atrakcije}`,
           `Naziv: ${item.naziv || "Nije dostupno"}`,
           `Opis: ${shorten(item.opis || "Nije dostupno")}`,
           `Adresa: ${item.adresa || "Nije dostupno"}`,
-          `Ocjena: ${item.prosjecna_ocjena ?? "Nije dostupno"}`,
+          `Prosječna ocjena: ${
+            item.prosjecna_ocjena ?? "Nije dostupno"
+          }`,
+          `Geografska širina: ${
+            item.geografska_sirina ?? "Nije dostupno"
+          }`,
+          `Geografska dužina: ${
+            item.geografska_duzina ?? "Nije dostupno"
+          }`,
         ].join(", ")
       )
       .join("\n");
   }
 
-  function buildSystemPrompt(attractionsContext) {
-    return `
-      Ti si koristan i prirodan AI chatbot unutar turističke web aplikacije.
+  function buildCommentsContext(comments) {
+    if (!Array.isArray(comments) || comments.length === 0) {
+      return "Za ovu atrakciju trenutno nema komentara u bazi.";
+    }
 
-      Pomažeš korisnicima s turističkim atrakcijama, lokacijama, izletima, prirodom, povijesnim znamenitostima i putovanjima. Možeš odgovoriti i na općenita pitanja ako nisu vezana uz turizam.
-
-      Način odgovaranja:
-      - odgovaraj na hrvatskom jeziku (osim ako korisnik traži drugačije)
-      - piši opušteno, jasno i prirodno, kao čovjek
-      - koristi kratke i razumljive rečenice
-      - izbjegavaj pretjerano formatiranje (npr. previše podebljanja ili velikih slova)
-      - markdown koristi samo ako stvarno pomaže čitljivosti
-      - emoji koristi rijetko i samo ako ima smisla
-
-      Točnost:
-      - ako korisnik pita o atrakcijama iz aplikacije, koristi isključivo podatke iz baze
-      - nemoj izmišljati informacije
-      - ako nema dovoljno podataka, reci to iskreno
-      - ako nisi siguran, slobodno to naglasi
-
-      Preporuke:
-      - daj kratko objašnjenje zašto nešto preporučuješ
-      - možeš spomenuti ugođaj, tip mjesta i kome bi odgovaralo
-
-      Podaci iz baze atrakcija:
-      ${attractionsContext}
-        `.trim();
+    return comments
+      .map(
+        (comment, index) =>
+          `${index + 1}. komentar: ${shorten(
+            comment.Komentar || "Nema sadržaja",
+            220
+          )}`
+      )
+      .join("\n");
   }
-  async function getAttractionsForPrompt() {
-    const attractions = await queryAsync(`
-      SELECT id_atrakcije, naziv, opis, adresa, prosjecna_ocjena
-      FROM atrakcije
-      LIMIT 30
-    `);
 
-    return attractions || [];
+  function buildRatingsContext(ratings) {
+    if (!Array.isArray(ratings) || ratings.length === 0) {
+      return "Za ovu atrakciju trenutno nema pojedinačnih ocjena u tablici Ocjena.";
+    }
+
+    return ratings
+      .map((rating, index) => `${index + 1}. ocjena: ${rating.ocjena}`)
+      .join("\n");
+  }
+
+  function buildImagesContext(images) {
+    if (!Array.isArray(images) || images.length === 0) {
+      return "Za ovu atrakciju trenutno nema dodatnih slika u tablici slike.";
+    }
+
+    return `Broj dodatnih slika za atrakciju: ${images.length}.`;
+  }
+
+  function buildSystemPrompt({ intent, attractionsContext, extraContext }) {
+    return `
+Ti si koristan i prirodan AI chatbot unutar turističke web aplikacije.
+
+Odgovaraj na hrvatskom jeziku, osim ako korisnik izričito traži drugi jezik.
+
+Pravila odgovaranja:
+- odgovaraj jasno, prirodno i sažeto
+- koristi isključivo podatke iz baze kad korisnik pita o atrakcijama iz aplikacije
+- nemoj izmišljati informacije koje nisu u podacima
+- ako nešto ne postoji u bazi, to reci iskreno
+- ako je korisnik tražio preporuku, preporuči samo na temelju podataka iz baze
+- ako ima više rezultata, izdvoji najrelevantnije i kratko objasni zašto
+- ako korisnik pita za komentare, sažmi što piše u komentarima bez izmišljanja
+- ako korisnik pita općenito, a postoje podaci iz baze koji pomažu, osloni se primarno na njih
+
+Prepoznata vrsta upita:
+${intent}
+
+Relevantni podaci iz baze - atrakcije:
+${attractionsContext}
+
+Dodatni relevantni podaci:
+${extraContext}
+    `.trim();
+  }
+
+  async function buildContextForMessage(message) {
+    const intent = detectIntent(message);
+
+    if (intent === "top") {
+      const topAttractions = await getTopAttractions(5);
+
+      return {
+        intent,
+        attractionsContext: buildAttractionsContext(topAttractions),
+        extraContext:
+          "Ovo su atrakcije sortirane po prosječnoj ocjeni silazno.",
+      };
+    }
+
+    if (intent === "comments") {
+      const attraction = await findBestMatchingAttraction(message);
+
+      if (!attraction) {
+        return {
+          intent,
+          attractionsContext: "Nije pronađena odgovarajuća atrakcija za komentare.",
+          extraContext: "Komentare nije moguće prikazati bez pronađene atrakcije.",
+        };
+      }
+
+      const comments = await getCommentsForAttractionId(attraction.id_atrakcije, 5);
+      const ratings = await getRatingsForAttractionId(attraction.id_atrakcije);
+
+      return {
+        intent,
+        attractionsContext: buildAttractionsContext([attraction]),
+        extraContext: [
+          "Komentari za pronađenu atrakciju:",
+          buildCommentsContext(comments),
+          "",
+          "Pojedinačne ocjene za pronađenu atrakciju:",
+          buildRatingsContext(ratings),
+        ].join("\n"),
+      };
+    }
+
+    if (intent === "images") {
+      const attraction = await findBestMatchingAttraction(message);
+
+      if (!attraction) {
+        return {
+          intent,
+          attractionsContext: "Nije pronađena odgovarajuća atrakcija za slike.",
+          extraContext: "Nije moguće provjeriti slike bez pronađene atrakcije.",
+        };
+      }
+
+      const images = await getImagesForAttractionId(attraction.id_atrakcije);
+
+      return {
+        intent,
+        attractionsContext: buildAttractionsContext([attraction]),
+        extraContext: buildImagesContext(images),
+      };
+    }
+
+    if (intent === "location" || intent === "search") {
+      const results = await searchAttractionsByMessage(message, 8);
+
+      if (!results.length) {
+        const fallback = await getTopAttractions(5);
+
+        return {
+          intent,
+          attractionsContext:
+            "Nema direktnog podudaranja za korisnički upit u nazivu, opisu ili adresi.",
+          extraContext: [
+            "Kao pomoćni kontekst prikazane su najbolje ocijenjene atrakcije iz baze:",
+            buildAttractionsContext(fallback),
+          ].join("\n"),
+        };
+      }
+
+      return {
+        intent,
+        attractionsContext: buildAttractionsContext(results),
+        extraContext:
+          "Ovo su najrelevantnije atrakcije pronađene prema nazivu, opisu ili adresi.",
+      };
+    }
+
+    if (intent === "all") {
+      const attractions = await getAllAttractions(12);
+
+      return {
+        intent,
+        attractionsContext: buildAttractionsContext(attractions),
+        extraContext: "Prikazan je popis dostupnih atrakcija iz baze.",
+      };
+    }
+
+    const fallback = await getTopAttractions(5);
+
+    return {
+      intent: "general",
+      attractionsContext: buildAttractionsContext(fallback),
+      extraContext:
+        "Korisnik nije postavio strogo strukturirano pitanje pa su kao pomoć dani najrelevantniji podaci iz baze.",
+    };
   }
 
   async function buildMessages(message, history) {
-    const attractions = await getAttractionsForPrompt();
-    const attractionsContext = buildAttractionsContext(attractions);
-    const systemPrompt = buildSystemPrompt(attractionsContext);
+    const context = await buildContextForMessage(message);
+    const systemPrompt = buildSystemPrompt(context);
 
     return [
       { role: "system", content: systemPrompt },
@@ -129,7 +545,7 @@ function createChatbotRouter({ queryAsync }) {
           stream: false,
           keep_alive: "10m",
           options: {
-            temperature: 0.7,
+            temperature: 0.5,
           },
         },
         {
@@ -229,7 +645,7 @@ function createChatbotRouter({ queryAsync }) {
           stream: true,
           keep_alive: "10m",
           options: {
-            temperature: 0.7,
+            temperature: 0.5,
           },
         },
         responseType: "stream",

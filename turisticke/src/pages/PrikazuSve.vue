@@ -145,7 +145,7 @@ export default {
     const getPosts = async () => {
       try {
         const response = await api.get("sveatrakcije");
-        posts.value = response.data;
+        posts.value = response.data.data || [];
       } catch (error) {
         console.error(error);
       }
