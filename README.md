@@ -33,33 +33,15 @@ The system combines Vue + Quasar on the frontend with Node.js, Express and MySQL
 
 ## Technology Stack
 
-### Frontend
-- Vue 3
-- Quasar Framework
-- Vue Router
-- Axios
-- Leaflet
-- Markdown-it
-- Browser Image Compression
-
-### Backend
-- Node.js
-- Express
-- MySQL
-- JWT Authentication
-- bcryptjs
-- Multer
-- CORS
-
-### Development
-- Nodemon
-- ESLint
-- Prettier
-- Vite
-
-### AI
-- Ollama
-- Server-Sent Events (SSE)
+| Frontend | Backend | AI / Development |
+|:--------:|:-------:|:----------------:|
+| Vue 3 | Node.js | Ollama |
+| Quasar | Express | SSE Streaming |
+| Vue Router | MySQL | Nodemon |
+| Axios | JWT | ESLint |
+| Leaflet | bcryptjs | Prettier |
+| Markdown-it | Multer | Vite |
+| Image Compression | CORS | Git |
 
 ---
 
@@ -204,13 +186,7 @@ DB_NAME=turisticke
 
 ```bash
 cd backend
-npm run dev
-```
-
-or
-
-```bash
-npm start
+node index.js
 ```
 
 ---
