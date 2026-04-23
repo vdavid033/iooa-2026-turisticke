@@ -17,11 +17,15 @@ Armin Lišić · Ivan Gržetić
 <h2 align="center">Overview</h2>
 
 <p align="center">
-User authentication • Attractions Management • MySQL Database • Interactive Maps • AI Chatbot
+  <img src="./turisticke/public/chatbot.png" width="900" alt="Application Preview"/>
 </p>
 
 <p align="center">
-Tourist attractions is a full-stack application built with separated frontend and backend architecture.
+User Authentication • Attractions Management • MySQL Database • Interactive Maps • AI Chatbot
+</p>
+
+<p align="center">
+Tourist Attractions is a full-stack application built with separated frontend and backend architecture.
 </p>
 
 ---
