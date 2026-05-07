@@ -1,6 +1,6 @@
-# iooa-2026-turisticke
-Turističke atrakcije<br>
-Laura Celcner
-Anto Avgustinović
-Luka Majetić
-Elena Simonović
+ TIM Turističke atrakcije
+ 
+Ivana Radnić
+Renato Prebeg
+Paolo Glavić
+Albert Mioč
