@@ -176,9 +176,9 @@ export default {
     },
 
     closeAndReload() {
-      this.showDialog = false;
-      window.location.reload();
-    },
+  this.showDialog = false;
+  this.$router.push("/atrakcije");
+},
 
     onFileSelected(event) {
       this.inputSlika = event.target.files[0];
@@ -201,6 +201,19 @@ export default {
       this.$refs.adresaRef.resetValidation();
     },
     async submitForm() {
+
+      const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    alert("Morate biti prijavljeni kako biste dodali atrakciju.");
+    this.$router.push("/auth");
+    return;
+  }
+
+  if (!this.inputNaziv || !this.inputOpis) {
+    alert("Naziv i opis atrakcije su obavezni.");
+    return;
+  }
 
       const sampleData = {
         naziv: this.inputNaziv,
