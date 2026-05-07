@@ -173,6 +173,12 @@ export default defineComponent({
           link: "/unos"
         },
         {
+          title: "Karta atrakcija",
+          caption: "Prikaz svih atrakcija na karti",
+          icon: "map",
+          link: "/karta-atrakcija"
+        },
+        {
           title: "Testiranje Axiosa",
           caption: "služi za testiranje Axiosa",
           icon: "swap_horizontal_circle",

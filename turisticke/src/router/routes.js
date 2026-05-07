@@ -12,6 +12,11 @@ const routes = [
         name: "SveAtrakcije",
         component: () => import("pages/SveAtrakcije.vue"),
       },
+      {
+        path: "karta-atrakcija",
+        name: "KartaAtrakcija",
+        component: () => import("pages/KartaAtrakcijaPage.vue"),
+      },
       { path: "unos", component: () => import("pages/Unos_atrakcija.vue") },
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
       { path: "dodavanje slika", component: () => import("pages/DodavanjeSlikaPage.vue"),},
