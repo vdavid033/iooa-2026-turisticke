@@ -121,6 +121,11 @@ export default {
       inputSirina: "",
       inputAdresa: "",
       inputSlika: null,
+
+      file: null,
+      base64Image: "",
+      base64Text: "",
+      showDialog: false
     };
   },
   methods: {
@@ -163,7 +168,7 @@ export default {
         reader.onerror = (error) => {
           console.error(error);
         };
-        b;
+        
       } catch (error) {
         console.error(error);
         return alert("Došlo je do pogreške prilikom kompresije slike.");
@@ -171,9 +176,9 @@ export default {
     },
 
     closeAndReload() {
-      this.showDialog = false;
-      window.location.reload();
-    },
+  this.showDialog = false;
+  this.$router.push("/atrakcije");
+},
 
     onFileSelected(event) {
       this.inputSlika = event.target.files[0];
@@ -196,24 +201,47 @@ export default {
       this.$refs.adresaRef.resetValidation();
     },
     async submitForm() {
+
+      const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    alert("Morate biti prijavljeni kako biste dodali atrakciju.");
+    this.$router.push("/auth");
+    return;
+  }
+
+  if (!this.inputNaziv || !this.inputOpis) {
+    alert("Naziv i opis atrakcije su obavezni.");
+    return;
+  }
+
       const sampleData = {
         naziv: this.inputNaziv,
         opis: this.inputOpis,
-        slika: this.inputSlika,
+        slika: this.inputSlika || null,
+        prosjecna_ocjena: 0,
         geografska_duzina: this.inputDuzina,
         geografska_sirina: this.inputSirina,
-        adresa: this.inputAdresa,
+        adresa: this.inputAdresa
       };
+
       try {
+
         const response = await axios.post(
           "http://localhost:4200/unosAtrakcija",
           sampleData
         );
+
         console.log(response.data);
+
         this.showDialog = true;
         this.resetForm();
+
       } catch (error) {
+
         console.error(error);
+        alert("Greška pri unosu atrakcije");
+
       }
     },
   },

@@ -1,21 +1,68 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+  <q-layout view="lHh Lpr lFf" style="min-height: 100vh;">
+    <q-header elevated style="background: linear-gradient(to right, #4f46e5, #7e22ce) !important; height: 100px; display: flex; align-items: center;">
+      <q-toolbar class="q-px-md">
+        <!-- Gumb za menu (opcionalno, ostavio sam ga ako zatreba) -->
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" class="text-white q-mr-sm" />
 
-        <q-toolbar-title>
-          <div class="text-h6"><b>Turističke atrakcije</b></div>
-        </q-toolbar-title>
+        <!-- LIJEVA STRANA: Registracija -->
+        <q-btn
+        v-if="!user"
+          unelevated
+          rounded
+          color="amber-7"
+          text-color="black"
+          label="Registracija"
+          to="/auth?mode=register"
+          class="q-px-lg text-weight-bold"
+        />
 
-        <div>Bad Developers</div>
+        <!-- SPACE: Ovo gura sve nakon njega na desnu stranu -->
+        <q-space />
+
+        <!-- DESNA STRANA: Prijava i Sve a trakcije -->
+        <div class="q-gutter-sm">
+          <q-btn
+          v-if="!user"
+            unelevated
+            rounded
+            color="amber-7"
+            text-color="black"
+            label="Prijava"
+            to="/auth?mode=login"
+            class="q-px-lg text-weight-bold"
+          />
+
+          <!-- Gumb Odjava (ako JE prijavlje  n) -->
+          <q-btn
+            v-else
+            unelevated
+            rounded
+            color="red-5"
+            text-color="white"
+            label="Odjava"
+            @click="logout"
+            class="q-px-lg text-weight-bold"
+          />
+
+          <q-btn
+            unelevated
+            rounded
+            color="amber-7"
+            text-color="black"
+            label="Sve atrakcije"
+            to="/atrakcije"
+            class="q-px-lg text-weight-bold"
+          />
+        </div>
+
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
+    <!-- Ostatak layouta ostaje isti -->
+    <q-drawer v-model="leftDrawerOpen" bordered>
       <q-list>
         <q-item-label header> Izbornik </q-item-label>
-
         <EssentialLink v-for="link in essentialLinks" :key="link.title" v-bind="link" />
       </q-list>
     </q-drawer>
@@ -27,17 +74,18 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
-import EssentialLink from "components/EssentialLink.vue";
+//import EssentialLink from "components/EssentialLink.vue";
 
-const linksList = [
-  {
-    title: "Prijava",
-    icon: "login",
-    link: "auth",
+//const linksList = [
+/*
+{
+    title: "Homepage",
+    caption: "Main page",
+    icon: "home",
+    link: "/home",
     target: "_self",
   },
-  {
+{
     title: "Moje atrakcije",
     caption: "popis mojih atrakcija",
     icon: "favorite",
@@ -89,7 +137,12 @@ const linksList = [
   //   icon: "favorite",
   //   link: "https://awesome.quasar.dev",
   // },
-];
+];*/
+
+// Layout skripta za dinamično mijenjanje kartice Prijave i Odjave
+
+import { defineComponent, ref, computed } from "vue";
+import EssentialLink from "components/EssentialLink.vue";
 
 export default defineComponent({
   name: "MainLayout",
@@ -99,15 +152,89 @@ export default defineComponent({
   },
 
   setup() {
-    const leftDrawerOpen = ref(false);
+    const leftDrawerOpen = ref(false)
+
+    const user = ref(JSON.parse(localStorage.getItem("user")))
+
+    const logout = () => {
+      localStorage.removeItem("user")
+      location.reload()
+    }
+
+    const essentialLinks = computed(() => {
+
+      const links = []
+
+
+      links.push(
+        {
+          title: "Moje atrakcije",
+          caption: "popis mojih atrakcija",
+          icon: "favorite",
+          link: "/"
+        },
+        {
+          title: "Unos atrakcija",
+          caption: "unos novih atrakcija",
+          icon: "swap_horizontal_circle",
+          link: "/unos"
+        },
+        {
+          title: "Karta atrakcija",
+          caption: "Prikaz svih atrakcija na karti",
+          icon: "map",
+          link: "/karta-atrakcija"
+        },
+        {
+          title: "Testiranje Axiosa",
+          caption: "služi za testiranje Axiosa",
+          icon: "swap_horizontal_circle",
+          link: "/axo"
+        },
+        {
+          title: "Dodavanje slika",
+          caption: "Dodavanje dodatnih slika",
+          icon: "swap_horizontal_circle",
+          link: "/dodavanje slika"
+        },
+        {
+          title: "Galerija slika",
+          caption: "Galerija slika korisnika",
+          icon: "swap_horizontal_circle",
+          link: "/galerija slika"
+        }
+      )
+
+      return links
+    })
 
     return {
-      essentialLinks: linksList,
+      user,
+      logout,
+      essentialLinks,
       leftDrawerOpen,
       toggleLeftDrawer() {
-        leftDrawerOpen.value = !leftDrawerOpen.value;
+        leftDrawerOpen.value = !leftDrawerOpen.value
       },
-    };
+    }
   },
-});
+})
 </script>
+
+<style lang="scss">
+/* Koristimo globalni stil da pokrijemo sve praznine */
+.bg-main {
+  /* Postavljamo najtamniju boju iz tvog gradijenta kao bazu */
+  background-color: #4c1d95 !important;
+}
+
+/* O siguravamo da i kontejner stranica ne forsira bijelu boju */
+.q-page-container {
+  background-color: transparent !important;
+}
+
+/* Ako želiš da cijela aplikacija ima taj gradijent kao fiksnu podlogu: */
+body {
+  background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) fixed !important;
+}
+</style>
