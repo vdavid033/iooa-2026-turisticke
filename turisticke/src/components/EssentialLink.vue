@@ -1,5 +1,5 @@
 <template>
-  <q-item clickable tag="a" target="_blank" :href="link">
+  <q-item clickable @click="handleClick">
     <q-item-section v-if="icon" avatar>
       <q-icon :name="icon" />
     </q-item-section>
@@ -12,10 +12,12 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, ref, computed } from "vue";
+import { useRouter } from "vue-router";
 
 export default defineComponent({
   name: "EssentialLink",
+
   props: {
     title: {
       type: String,
@@ -29,13 +31,38 @@ export default defineComponent({
 
     link: {
       type: String,
-      default: "#",
+      default: "",
     },
 
     icon: {
       type: String,
       default: "",
     },
+
+    action: {
+      type: Function,
+      default: null,
+    },
   },
+
+  setup(props) {
+    const router = useRouter()
+
+    const handleClick = () => {
+
+      if (props.action) {
+        props.action()
+        return
+      }
+
+      if (props.link) {
+        router.push(props.link)
+      }
+    }
+
+    return {
+      handleClick
+    }
+  }
 });
 </script>
