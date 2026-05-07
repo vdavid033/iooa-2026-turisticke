@@ -504,6 +504,182 @@ app.delete('/obrisi_komentar/:id', function (request, response){
       }
     })
   });
+  app.post("/dodajSlikuAtrakciji", async (req, res) => {
+    try {
+      const { id_atrakcije, slika, id_korisnika } = req.body;
+
+      dbConn.query(
+        `
+      INSERT INTO slike
+      (id_atrakcije_s, slika_s, id_korisnika)
+      VALUES (?, ?, ?)
+      `,
+        [id_atrakcije, slika, id_korisnika],
+
+        function (error, results, fields) {
+          if (error) {
+            console.error(error);
+
+            return res.status(500).json({
+              success: false,
+              error: "Greška pri spremanju slike.",
+            });
+          }
+
+          return res.json({
+            success: true,
+            message: "Slika uspješno spremljena.",
+          });
+        },
+      );
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        success: false,
+        error: "Greška pri spremanju slike.",
+      });
+    }
+  });
+  app.get("/dohvatiAtrakcije", async (req, res) => {
+    try {
+      dbConn.query(
+        `
+      SELECT *
+      FROM atrakcije
+      `,
+
+        function (error, results, fields) {
+          if (error) {
+            console.error(error);
+
+            return res.status(500).json({
+              error: "Greška pri dohvaćanju atrakcija.",
+            });
+          }
+
+          return res.json(results);
+        },
+      );
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Greška pri dohvaćanju atrakcija.",
+      });
+    }
+  });
+  app.get("/dohvatiSveSlike", async (req, res) => {
+    try {
+      dbConn.query(
+        `
+      SELECT
+
+        slike.id_slike,
+        slike.slika_s,
+        slike.id_korisnika,
+
+        atrakcije.naziv,
+        atrakcije.id_atrakcije
+
+      FROM slike
+
+      INNER JOIN atrakcije
+      ON slike.id_atrakcije_s = atrakcije.id_atrakcije
+      `,
+
+        function (error, results, fields) {
+          if (error) {
+            console.error(error);
+
+            return res.status(500).json({
+              error: "Greška pri dohvaćanju slika.",
+            });
+          }
+
+          return res.json(results);
+        },
+      );
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Greška pri dohvaćanju slika.",
+      });
+    }
+  });
+  app.get("/dohvatiSveSlike", async (req, res) => {
+    try {
+      dbConn.query(
+        `
+      SELECT
+
+        slike.id_slike,
+        slike.slika_s,
+
+        atrakcije.naziv,
+        atrakcije.id_atrakcije
+
+      FROM slike
+
+      INNER JOIN atrakcije
+      ON slike.id_atrakcije_s = atrakcije.id_atrakcije
+      `,
+
+        function (error, results, fields) {
+          if (error) {
+            console.error(error);
+
+            return res.status(500).json({
+              error: "Greška pri dohvaćanju slika.",
+            });
+          }
+
+          return res.json(results);
+        },
+      );
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Greška pri dohvaćanju slika.",
+      });
+    }
+  });
+  app.delete("/obrisiSliku/:id", function (request, response) {
+    let id_slike = request.params.id;
+
+    if (!id_slike) {
+      return response.status(400).send({
+        error: true,
+        message: "nedostaje id slike",
+      });
+    }
+
+    const deleteQuery = "DELETE FROM slike WHERE id_slike = ?";
+
+    dbConn.query(
+      deleteQuery,
+      [id_slike],
+
+      function (error, results) {
+        if (error) {
+          console.log(error);
+
+          return response.status(500).send({
+            error: true,
+            message: "greška pri brisanju slike",
+          });
+        }
+
+        return response.send({
+          error: false,
+          data: results,
+          message: "slika obrisana",
+        });
+      },
+    );
+  });
 //port na kojem je app
 app.listen(4200, function () {
 console.log('Node app is running on port 4200');

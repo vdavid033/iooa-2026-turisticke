@@ -160,12 +160,6 @@ export default defineComponent({
 
 
       links.push(
-         {
-          title: "Homepage",
-          caption: "Main page",
-          icon: "home",
-          link: "/home"
-        },
         {
           title: "Moje atrakcije",
           caption: "popis mojih atrakcija",
@@ -183,6 +177,18 @@ export default defineComponent({
           caption: "služi za testiranje Axiosa",
           icon: "swap_horizontal_circle",
           link: "/axo"
+        },
+        {
+          title: "Dodavanje slika",
+          caption: "Dodavanje dodatnih slika",
+          icon: "swap_horizontal_circle",
+          link: "/dodavanje slika"
+        },
+        {
+          title: "Galerija slika",
+          caption: "Galerija slika korisnika",
+          icon: "swap_horizontal_circle",
+          link: "/galerija slika"
         }
       )
 

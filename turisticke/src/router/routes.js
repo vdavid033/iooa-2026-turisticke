@@ -5,40 +5,42 @@ const routes = [
     children: [
       {
         path: "",
-        component: () => import("pages/HomePage.vue")
+        component: () => import("pages/HomePage.vue"),
       },
       {
         path: "atrakcije",
         name: "SveAtrakcije",
-        component: () => import("pages/SveAtrakcije.vue")
+        component: () => import("pages/SveAtrakcije.vue"),
       },
       { path: "unos", component: () => import("pages/Unos_atrakcija.vue") },
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
+      { path: "dodavanje slika", component: () => import("pages/DodavanjeSlikaPage.vue"),},
+      { path: "galerija slika", component: () => import("pages/GalerijaSlikaPage.vue"), },
     ],
   },
 
   {
-    path: '/admin',
-    component: () => import('layouts/AdminLayout.vue'),
-    children: [
-      { path: '', component: () => import('pages/AdminPage.vue') }
-    ]
+    path: "/admin",
+    component: () => import("layouts/AdminLayout.vue"),
+    children: [{ path: "", component: () => import("pages/AdminPage.vue") }],
   },
 
   // 2. BLANK LAYOUT (Stranice bez Headera - Login, Detalji, Slike)
   {
     path: "/auth",
     component: () => import("layouts/BlankLayout.vue"),
-    children: [
-      { path: "", component: () => import("pages/LoginPage.vue") },
-    ],
+    children: [{ path: "", component: () => import("pages/LoginPage.vue") }],
   },
 
   {
     path: "/one_atraction",
     component: () => import("layouts/BlankLayout.vue"),
     children: [
-      { name: "one_atraction", path: ":id", component: () => import("pages/AtrakcijePage.vue") },
+      {
+        name: "one_atraction",
+        path: ":id",
+        component: () => import("pages/AtrakcijePage.vue"),
+      },
     ],
   },
 
@@ -46,7 +48,11 @@ const routes = [
     path: "/komentari",
     component: () => import("layouts/BlankLayout.vue"),
     children: [
-      { name: "komentari", path: ":id", component: () => import("pages/komentariPage.vue") },
+      {
+        name: "komentari",
+        path: ":id",
+        component: () => import("pages/komentariPage.vue"),
+      },
     ],
   },
 
@@ -54,7 +60,11 @@ const routes = [
     path: "/slika",
     component: () => import("layouts/BlankLayout.vue"),
     children: [
-      { name: "slika", path: "", component: () => import("pages/dodaj_slika.vue") },
+      {
+        name: "slika",
+        path: "",
+        component: () => import("pages/dodaj_slika.vue"),
+      },
     ],
   },
 
