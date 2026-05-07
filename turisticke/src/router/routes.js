@@ -6,6 +6,11 @@ const routes = [
       { path: "", component: () => import("pages/IndexPage.vue") },
       { path: "unos", component: () => import("pages/Unos_atrakcija.vue")},
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
+      {
+        path: "karta-atrakcija",
+        name: "KartaAtrakcija",
+        component: () => import("pages/KartaAtrakcijaPage.vue"),
+},
 
     ],
   },
