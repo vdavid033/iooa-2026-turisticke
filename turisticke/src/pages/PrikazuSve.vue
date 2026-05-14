@@ -4,13 +4,13 @@
       <div class="top-content">
         <div class="page-badge">
           <q-icon name="place" size="18px" />
-          <span>Pregled atrakcija</span>
+          <span>Sve atrakcije</span>
         </div>
 
         <h1 class="page-title">Istraži turističke atrakcije</h1>
         <p class="page-subtitle">
-          Pregledaj lokacije, ocjene i detalje atrakcija te jednostavno pronađi
-          mjesta koja želiš posjetiti.
+          Pregledaj najzanimljivije lokacije, usporedi ocjene i pronađi
+          atrakcije koje želiš posjetiti.
         </p>
 
         <div class="actions-row">
@@ -39,8 +39,8 @@
     <section class="cards-section">
       <div v-if="posts.length === 0" class="empty-state">
         <q-icon name="travel_explore" size="64px" color="primary" />
-        <h3>Nema dostupnih atrakcija</h3>
-        <p>Trenutno nema podataka za prikaz ili korisnik nije prijavljen.</p>
+        <h3>Trenutno nema dostupnih atrakcija</h3>
+        <p>Pokušaj ponovno kasnije ili dodaj novu atrakciju.</p>
       </div>
 
       <div v-else class="cards-grid">
@@ -50,9 +50,13 @@
           class="attraction-card"
         >
           <div class="image-wrapper">
-            <q-img :src="post.slika" class="card-image">
-              <div class="image-overlay"></div>
-            </q-img>
+            <q-img
+              :src="post.slika"
+              class="card-image"
+              spinner-color="primary"
+            />
+
+            <div class="image-overlay"></div>
 
             <div class="card-top-actions">
               <q-btn
@@ -66,6 +70,7 @@
               </q-btn>
 
               <q-btn
+                v-if="isAdmin"
                 round
                 glossy
                 color="negative"
@@ -129,41 +134,20 @@ import { api } from "boot/axios";
 import { jwtDecode } from "jwt-decode";
 
 export default {
-  name: "AtrakcijePage",
+  name: "PrikazuSve",
 
   setup() {
     const posts = ref([]);
+    const token = localStorage.getItem("token");
+    const decodedToken = token ? jwtDecode(token) : {};
+    const isAdmin = ref(decodedToken.uloga === "admin");
 
     const getPosts = async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          console.error("Token not found. Please log in.");
-          posts.value = [];
-          return;
-        }
-
-        const decodedToken = jwtDecode(token);
-        const id_korisnika = decodedToken.id;
-
-        if (!id_korisnika) {
-          console.error("User ID missing in the token.");
-          posts.value = [];
-          return;
-        }
-
-        const params = new URLSearchParams({ id_korisnik: id_korisnika });
-
-        const response = await api.get(`atrakcije?${params}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
+        const response = await api.get("sveatrakcije");
         posts.value = response.data.data || [];
       } catch (error) {
-        console.error("Error fetching posts:", error);
+        console.error(error);
       }
     };
 
@@ -184,6 +168,7 @@ export default {
         const confirmation = window.confirm(
           "Jeste li sigurni da želite izbrisati atrakciju?"
         );
+
         if (!confirmation) {
           return;
         }
@@ -227,6 +212,7 @@ export default {
       sortPostsAsc,
       sortPostsDesc,
       deleteById,
+      isAdmin,
     };
   },
 };
@@ -305,7 +291,7 @@ export default {
 .attraction-card {
   border-radius: 24px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 14px 35px rgba(15, 23, 42, 0.1);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }

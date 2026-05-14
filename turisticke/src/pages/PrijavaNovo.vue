@@ -14,14 +14,12 @@
 
       <q-card-section class="text-center q-pb-none">
         <div class="brand-badge">
-          <q-icon name="person_add" size="28px" />
+          <q-icon name="login" size="28px" />
         </div>
 
-        <div class="text-h4 text-weight-bold title">Registracija</div>
+        <div class="text-h4 text-weight-bold title">Prijava</div>
 
-        <p class="subtitle">
-          Izradite novi račun i nastavite koristiti aplikaciju
-        </p>
+        <p class="subtitle">Prijavite se u svoj korisnički račun</p>
       </q-card-section>
 
       <q-card-section class="q-pt-lg">
@@ -33,10 +31,7 @@
           color="primary"
           class="q-mb-md custom-input"
           lazy-rules
-          :rules="[
-            (val) => !!val || 'Unesite korisničko ime',
-            (val) => val.length >= 3 || 'Najmanje 3 znaka',
-          ]"
+          :rules="[(val) => !!val || 'Unesite korisničko ime']"
         >
           <template #prepend>
             <q-icon name="person" />
@@ -52,10 +47,8 @@
           color="primary"
           class="q-mb-md custom-input"
           lazy-rules
-          :rules="[
-            (val) => !!val || 'Unesite lozinku',
-            (val) => val.length >= 6 || 'Lozinka mora imati barem 6 znakova',
-          ]"
+          :rules="[(val) => !!val || 'Unesite lozinku']"
+          @keyup.enter="login"
         >
           <template #prepend>
             <q-icon name="lock" />
@@ -70,56 +63,24 @@
           </template>
         </q-input>
 
-        <q-input
-          v-model="potvrda_lozinke"
-          :type="showConfirmPassword ? 'text' : 'password'"
-          label="Potvrdite lozinku"
-          outlined
-          rounded
-          color="primary"
-          class="q-mb-sm custom-input"
-          lazy-rules
-          :rules="[
-            (val) => !!val || 'Potvrdite lozinku',
-            (val) => val === lozinka || 'Lozinke se ne podudaraju',
-          ]"
-          @keyup.enter="register"
-        >
-          <template #prepend>
-            <q-icon name="verified_user" />
-          </template>
-
-          <template #append>
-            <q-icon
-              :name="showConfirmPassword ? 'visibility_off' : 'visibility'"
-              class="cursor-pointer"
-              @click="showConfirmPassword = !showConfirmPassword"
-            />
-          </template>
-        </q-input>
-
-        <div class="password-hint q-mb-lg">
-          Lozinka treba sadržavati barem 6 znakova.
-        </div>
-
         <q-btn
-          label="Registriraj se"
+          label="Prijavi se"
           color="primary"
           unelevated
           rounded
           no-caps
           class="full-width auth-main-btn q-mb-sm"
-          @click="register"
+          @click="login"
         />
 
         <q-btn
-          label="Već imate račun? Prijavite se"
+          label="Nemate račun? Registrirajte se"
           outline
           color="primary"
           rounded
           no-caps
           class="full-width q-mb-sm"
-          to="/auth"
+          to="/registracijaputanja"
         />
 
         <q-btn
@@ -140,21 +101,19 @@
 import axios from "axios";
 
 export default {
-  name: "LoginPage",
+  name: "PrijavaNovo",
 
   data() {
     return {
       korisnicko_ime: "",
       lozinka: "",
-      potvrda_lozinke: "",
       showPassword: false,
-      showConfirmPassword: false,
     };
   },
 
   methods: {
-    async register() {
-      if (!this.korisnicko_ime || !this.lozinka || !this.potvrda_lozinke) {
+    async login() {
+      if (!this.korisnicko_ime || !this.lozinka) {
         this.$q.notify({
           type: "negative",
           message: "Molim ispunite sva polja",
@@ -163,34 +122,36 @@ export default {
         return;
       }
 
-      if (this.lozinka !== this.potvrda_lozinke) {
-        this.$q.notify({
-          type: "negative",
-          message: "Lozinke se ne podudaraju",
-          position: "top",
-        });
-        return;
-      }
-
       try {
-        const response = await axios.post("http://localhost:4200/register", {
+        const response = await axios.post("http://localhost:4200/prijavi", {
           korisnicko_ime: this.korisnicko_ime,
           lozinka: this.lozinka,
         });
 
-        this.$q.notify({
-          type: "positive",
-          message: response.data.message || "Registracija uspješna",
-          position: "top",
-        });
+        if (response.data.success) {
+          localStorage.setItem("token", response.data.token);
 
-        this.$router.push("/auth");
+          this.$q.notify({
+            type: "positive",
+            message: "Uspješna prijava",
+            position: "top",
+          });
+
+          this.$router.push("/atrakcije");
+        } else {
+          this.$q.notify({
+            type: "negative",
+            message: response.data.message || "Prijava nije uspjela",
+            position: "top",
+          });
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Login failed:", error);
 
         this.$q.notify({
           type: "negative",
-          message: "Greška pri registraciji",
+          message:
+            "Prijava nije uspjela. Provjerite podatke i pokušajte ponovno.",
           position: "top",
         });
       }
@@ -273,12 +234,6 @@ export default {
   border-radius: 16px;
   height: 56px;
   background: rgba(248, 250, 252, 0.92);
-}
-
-.password-hint {
-  font-size: 13px;
-  color: #64748b;
-  padding-left: 4px;
 }
 
 .auth-main-btn {

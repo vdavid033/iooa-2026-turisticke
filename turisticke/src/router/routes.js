@@ -3,31 +3,21 @@ const routes = [
     path: "/",
     component: () => import("layouts/MainLayout.vue"),
     children: [
-      {
-        path: "",
-        component: () => import("pages/HomePage.vue"),
-      },
-      {
-        path: "atrakcije",
-        name: "SveAtrakcije",
-        component: () => import("pages/SveAtrakcije.vue"),
-      },
+      { path: "", component: () => import("pages/IndexPage.vue") },
+      { path: "atrakcije", component: () => import("pages/PrikazuSve.vue") },
       { path: "unos", component: () => import("pages/Unos_atrakcija.vue") },
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
-      { path: "dodavanje slika", component: () => import("pages/DodavanjeSlikaPage.vue"),},
-      { path: "galerija slika", component: () => import("pages/GalerijaSlikaPage.vue"), },
     ],
   },
 
   {
-    path: "/admin",
-    component: () => import("layouts/AdminLayout.vue"),
-    children: [{ path: "", component: () => import("pages/AdminPage.vue") }],
+    path: "/auth",
+    component: () => import("layouts/BlankLayout.vue"),
+    children: [{ path: "", component: () => import("pages/PrijavaNovo.vue") }],
   },
 
-  // 2. BLANK LAYOUT (Stranice bez Headera - Login, Detalji, Slike)
   {
-    path: "/auth",
+    path: "/registracijaputanja",
     component: () => import("layouts/BlankLayout.vue"),
     children: [{ path: "", component: () => import("pages/LoginPage.vue") }],
   },
@@ -68,7 +58,6 @@ const routes = [
     ],
   },
 
-  // 404 Error
   {
     path: "/:catchAll(.*)*",
     component: () => import("pages/ErrorNotFound.vue"),

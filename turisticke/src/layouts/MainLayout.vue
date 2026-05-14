@@ -1,227 +1,482 @@
 <template>
-  <q-layout view="lHh Lpr lFf" style="min-height: 100vh;">
-    <q-header elevated style="background: linear-gradient(to right, #4f46e5, #7e22ce) !important; height: 100px; display: flex; align-items: center;">
-      <q-toolbar class="q-px-md">
-        <!-- Gumb za menu (opcionalno, ostavio sam ga ako zatreba) -->
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" class="text-white q-mr-sm" />
-
-        <!-- LIJEVA STRANA: Registracija -->
+  <q-layout view="lHh Lpr lFf">
+    <q-header elevated class="main-header">
+      <q-toolbar>
         <q-btn
-        v-if="!user"
-          unelevated
-          rounded
-          color="amber-7"
-          text-color="black"
-          label="Registracija"
-          to="/auth?mode=register"
-          class="q-px-lg text-weight-bold"
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Menu"
+          @click="toggleLeftDrawer"
         />
 
-        <!-- SPACE: Ovo gura sve nakon njega na desnu stranu -->
-        <q-space />
+        <q-toolbar-title>
+          <div class="text-h6 app-title"><b>Turističke atrakcije</b></div>
+        </q-toolbar-title>
 
-        <!-- DESNA STRANA: Prijava i Sve a trakcije -->
-        <div class="q-gutter-sm">
-          <q-btn
-          v-if="!user"
-            unelevated
-            rounded
-            color="amber-7"
-            text-color="black"
-            label="Prijava"
-            to="/auth?mode=login"
-            class="q-px-lg text-weight-bold"
-          />
-
-          <!-- Gumb Odjava (ako JE prijavlje  n) -->
-          <q-btn
-            v-else
-            unelevated
-            rounded
-            color="red-5"
-            text-color="white"
-            label="Odjava"
-            @click="logout"
-            class="q-px-lg text-weight-bold"
-          />
-
-          <q-btn
-            unelevated
-            rounded
-            color="amber-7"
-            text-color="black"
-            label="Sve atrakcije"
-            to="/atrakcije"
-            class="q-px-lg text-weight-bold"
-          />
+        <div v-if="tokenExists" class="user-role">
+          <q-icon name="verified_user" class="q-mr-sm" />
+          <span><b>Prijavljeni ste kao:</b> {{ userRole }}</span>
         </div>
 
+        <q-btn
+          flat
+          icon="logout"
+          label="ODJAVA"
+          v-if="tokenExists"
+          @click="logout"
+        />
       </q-toolbar>
     </q-header>
 
-    <!-- Ostatak layouta ostaje isti -->
-    <q-drawer v-model="leftDrawerOpen" bordered>
-      <q-list>
-        <q-item-label header> Izbornik </q-item-label>
-        <EssentialLink v-for="link in essentialLinks" :key="link.title" v-bind="link" />
+    <q-drawer v-model="leftDrawerOpen" bordered overlay class="sidebar-drawer">
+      <q-list padding>
+        <q-item-label header class="menu-header">Izbornik</q-item-label>
+
+        <EssentialLink
+          v-for="link in essentialLinks"
+          :key="link.title"
+          v-bind="link"
+          @click="closeDrawer"
+        />
+
+        <q-separator v-if="tokenExists" class="q-my-md" />
+
+        <q-item
+          v-if="tokenExists"
+          clickable
+          v-ripple
+          @click="logout"
+          class="logout-item"
+        >
+          <q-item-section avatar>
+            <q-icon name="logout" color="negative" />
+          </q-item-section>
+
+          <q-item-section>
+            <q-item-label>Odjava</q-item-label>
+            <q-item-label caption>Odjavi se iz sustava</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container @click="handlePageClick">
       <router-view />
     </q-page-container>
+
+    <GlobalChatbot />
+
+    <div class="main-footer">
+      <div class="footer-wrapper">
+        <div class="footer-top">
+          <div class="footer-brand">
+            <div class="footer-logo">
+              <q-icon name="travel_explore" size="30px" />
+            </div>
+            <div>
+              <h3>Turističke atrakcije</h3>
+              <p>
+                Moderna aplikacija za pregled, istraživanje i upravljanje
+                turističkim atrakcijama.
+              </p>
+            </div>
+          </div>
+
+          <div class="footer-links">
+            <div class="footer-column">
+              <h4>Navigacija</h4>
+              <router-link to="/" class="footer-link">Početna</router-link>
+              <router-link to="/auth" class="footer-link">Prijava</router-link>
+              <router-link to="/registracijaputanja" class="footer-link"
+                >Registracija</router-link
+              >
+            </div>
+
+            <div class="footer-column" v-if="tokenExists">
+              <h4>Sadržaj</h4>
+              <router-link to="/index" class="footer-link"
+                >Moje atrakcije</router-link
+              >
+              <router-link to="/unos" class="footer-link"
+                >Unos atrakcija</router-link
+              >
+            </div>
+
+            <div class="footer-column">
+              <h4>Informacije</h4>
+              <div class="footer-info">
+                <q-icon name="place" size="18px" />
+                <span>Hrvatska</span>
+              </div>
+              <div class="footer-info">
+                <q-icon name="email" size="18px" />
+                <span>turisticke.atrakcije@app.hr</span>
+              </div>
+              <div class="footer-info">
+                <q-icon name="info" size="18px" />
+                <span>Dostupno 24/7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <q-separator dark class="footer-separator" />
+
+        <div class="footer-bottom">
+          <span>© 2026 Turističke atrakcije. Sva prava pridržana.</span>
+          <span class="footer-made"
+            >Izrađeno s pažnjom za moderno korisničko iskustvo.</span
+          >
+        </div>
+      </div>
+    </div>
   </q-layout>
 </template>
 
 <script>
-//import EssentialLink from "components/EssentialLink.vue";
+import {
+  defineComponent,
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  watch,
+} from "vue";
+import { useRouter, useRoute } from "vue-router";
+import EssentialLink from "components/EssentialLink.vue";
+import GlobalChatbot from "components/GlobalChatbot.vue";
+import { jwtDecode } from "jwt-decode";
 
-//const linksList = [
-/*
-{
-    title: "Homepage",
-    caption: "Main page",
+const linksList = [
+  {
+    title: "Početna",
+    caption: "glavna početna stranica",
     icon: "home",
-    link: "/home",
-    target: "_self",
-  },
-{
-    title: "Moje atrakcije",
-    caption: "popis mojih atrakcija",
-    icon: "favorite",
     link: "/",
     target: "_self",
+    requiresAuth: false,
+    onlyGuest: true,
+  },
+  {
+    title: "Prijava",
+    caption: "prijava u sustav",
+    icon: "login",
+    link: "/auth",
+    target: "_self",
+    requiresAuth: false,
+    onlyGuest: true,
+  },
+  {
+    title: "Registracija",
+    caption: "izrada korisničkog računa",
+    icon: "person_add",
+    link: "/registracijaputanja",
+    target: "_self",
+    requiresAuth: false,
+    onlyGuest: true,
+  },
+  {
+    title: "Moje atrakcije",
+    caption: "pregled mojih atrakcija",
+    icon: "favorite",
+    link: "/index",
+    target: "_self",
+    requiresAuth: true,
+    onlyGuest: false,
   },
   {
     title: "Unos atrakcija",
-    caption: "nos novih atrakcija",
-    icon: "swap_horizontal_circle",
-    link: "unos",
+    caption: "dodavanje novih atrakcija",
+    icon: "add_location",
+    link: "/unos",
     target: "_self",
+    requiresAuth: true,
+    onlyGuest: false,
   },
-  {
-    title: "Testiranje Axiosa",
-    caption: "služi za testiranje Axiosa",
-    icon: "swap_horizontal_circle",
-    link: "axo",
-    target: "_self",
-  },
-  // {
-  //   title: "",
-  //   caption: "forum.quasar.dev",
-  //   icon: "record_voice_over",
-  //   link: "https://forum.quasar.dev",
-  // },
-  // {
-  //   title: "",
-  //   caption: "@quasarframework",
-  //   icon: "rss_feed",
-  //   link: "https://twitter.quasar.dev",
-  // },
-  // {
-  //   title: "",
-  //   caption: "@QuasarFramework",
-  //   icon: "public",
-  //   link: "https://facebook.quasar.dev",
-  // },
-  // {
-  //   title: "",
-  //   caption: "Community Quasar projects",
-  //   icon: "favorite",
-  //   link: "https://awesome.quasar.dev",
-  // },
-];*/
-
-// Layout skripta za dinamično mijenjanje kartice Prijave i Odjave
-
-import { defineComponent, ref, computed } from "vue";
-import EssentialLink from "components/EssentialLink.vue";
+];
 
 export default defineComponent({
   name: "MainLayout",
-
   components: {
     EssentialLink,
+    GlobalChatbot,
   },
-
   setup() {
-    const leftDrawerOpen = ref(false)
+    const router = useRouter();
+    const route = useRoute();
 
-    const user = ref(JSON.parse(localStorage.getItem("user")))
+    const leftDrawerOpen = ref(false);
+    const userRole = ref("Niste prijavljeni");
+    const tokenExists = ref(false);
 
-    const logout = () => {
-      localStorage.removeItem("user")
-      location.reload()
+    function refreshAuthState() {
+      const token = localStorage.getItem("token");
+      tokenExists.value = !!token;
+
+      if (!token) {
+        userRole.value = "Niste prijavljeni";
+        return;
+      }
+
+      try {
+        const decoded = jwtDecode(token);
+        userRole.value = decoded.uloga || "korisnik";
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        userRole.value = "Niste prijavljeni";
+        tokenExists.value = false;
+      }
     }
 
-    const essentialLinks = computed(() => {
+    function closeDrawer() {
+      leftDrawerOpen.value = false;
+    }
 
-      const links = []
+    function handlePageClick() {
+      if (leftDrawerOpen.value) {
+        closeDrawer();
+      }
+    }
 
+    function handleEsc(event) {
+      if (event.key === "Escape" && leftDrawerOpen.value) {
+        closeDrawer();
+      }
+    }
 
-      links.push(
-        {
-          title: "Moje atrakcije",
-          caption: "popis mojih atrakcija",
-          icon: "favorite",
-          link: "/"
-        },
-        {
-          title: "Unos atrakcija",
-          caption: "unos novih atrakcija",
-          icon: "swap_horizontal_circle",
-          link: "/unos"
-        },
-        {
-          title: "Testiranje Axiosa",
-          caption: "služi za testiranje Axiosa",
-          icon: "swap_horizontal_circle",
-          link: "/axo"
-        },
-        {
-          title: "Dodavanje slika",
-          caption: "Dodavanje dodatnih slika",
-          icon: "swap_horizontal_circle",
-          link: "/dodavanje slika"
-        },
-        {
-          title: "Galerija slika",
-          caption: "Galerija slika korisnika",
-          icon: "swap_horizontal_circle",
-          link: "/galerija slika"
-        }
-      )
+    function logout() {
+      localStorage.clear();
+      tokenExists.value = false;
+      userRole.value = "Niste prijavljeni";
+      leftDrawerOpen.value = false;
+      router.push("/");
+    }
 
-      return links
-    })
+    const filteredLinks = computed(() => {
+      return linksList.filter((link) => {
+        if (link.requiresAuth && !tokenExists.value) return false;
+        if (link.onlyGuest && tokenExists.value) return false;
+        return true;
+      });
+    });
+
+    onMounted(() => {
+      refreshAuthState();
+      window.addEventListener("keydown", handleEsc);
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener("keydown", handleEsc);
+    });
+
+    watch(
+      () => route.fullPath,
+      () => {
+        refreshAuthState();
+        closeDrawer();
+      }
+    );
 
     return {
-      user,
-      logout,
-      essentialLinks,
+      essentialLinks: filteredLinks,
       leftDrawerOpen,
+      tokenExists,
+      userRole,
+      logout,
+      closeDrawer,
+      handlePageClick,
       toggleLeftDrawer() {
-        leftDrawerOpen.value = !leftDrawerOpen.value
+        leftDrawerOpen.value = !leftDrawerOpen.value;
       },
-    }
+    };
   },
-})
+});
 </script>
 
-<style lang="scss">
-/* Koristimo globalni stil da pokrijemo sve praznine */
-.bg-main {
-  /* Postavljamo najtamniju boju iz tvog gradijenta kao bazu */
-  background-color: #4c1d95 !important;
+<style scoped>
+.main-header {
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: white;
+  backdrop-filter: blur(8px);
 }
 
-/* O siguravamo da i kontejner stranica ne forsira bijelu boju */
-.q-page-container {
-  background-color: transparent !important;
+.app-title {
+  letter-spacing: 0.3px;
 }
 
-/* Ako želiš da cijela aplikacija ima taj gradijent kao fiksnu podlogu: */
-body {
-  background: linear-gradient(to right, #4f46e5, #7e22ce, #4c1d95) fixed !important;
+.user-role {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+  font-size: 15px;
+}
+
+.sidebar-drawer {
+  background: #ffffff;
+}
+
+.menu-header {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.logout-item {
+  border-radius: 14px;
+}
+
+.main-footer {
+  background: linear-gradient(135deg, #0b1720, #132935, #1d3a49);
+  color: white;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 42px 24px 22px;
+}
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  flex: 1 1 320px;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.footer-logo {
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #42a5f5, #1976d2);
+  box-shadow: 0 10px 24px rgba(25, 118, 210, 0.35);
+}
+
+.footer-brand h3 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.footer-brand p {
+  margin: 0;
+  max-width: 420px;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.footer-links {
+  flex: 2 1 600px;
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.footer-column {
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-column h4 {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  margin-bottom: 10px;
+  transition: all 0.25s ease;
+  font-size: 15px;
+}
+
+.footer-link:hover {
+  color: #7dd3fc;
+  transform: translateX(4px);
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 15px;
+}
+
+.footer-separator {
+  margin: 28px 0 18px;
+  opacity: 0.18;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.footer-made {
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .footer-top {
+    flex-direction: column;
+  }
+
+  .footer-links {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer-wrapper {
+    padding: 32px 16px 20px;
+  }
+
+  .footer-brand {
+    flex-direction: column;
+  }
+
+  .footer-logo {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+  }
+
+  .footer-brand h3 {
+    font-size: 21px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footer-made {
+    text-align: left;
+  }
 }
 </style>

@@ -1,689 +1,805 @@
-// ovo treba biti pokrenuto kako bi Axios radio
-// pokreće se sa: node index.js
+const mysql = require("mysql");
+const express = require("express");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-const mysql = require('mysql');
-const express = require('express');
-const app = express();
-var cors = require('cors')
-var bodyParser = require('body-parser');
-const bcrypt = require('bcrypt');
-//const conn=require('./connection')
-
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true})); 
-app.use(express.json());
+const config = require("./auth.config.js");
+const authJwt = require("./authJwt.js");
 const dbConfig = require("./dbConfig");
+const createChatbotRouter = require("./chatbot");
 
-app.use(cors());
-//const cors = require('cors');
+const app = express();
+const PORT = 4200;
+const saltRounds = 10;
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors({ origin: "*" }));
 
-
-
-
-var dbConn = mysql.createConnection({
-    host: dbConfig.HOST,
-    user: dbConfig.USER,
-    password: dbConfig.PASSWORD,
-    database: dbConfig.DB
+const dbConn = mysql.createConnection({
+  host: dbConfig.HOST,
+  user: dbConfig.USER,
+  password: dbConfig.PASSWORD,
+  database: dbConfig.DB,
 });
 
-//spajanje s bazom
-dbConn.connect();
-
-
-
-
-
-// Ovo riješava problem: 
-// Origin <origin> is not allowed by Access-Control-Allow-Origin
-// from origin 'http://localhost:4200' has been blocked by CORS policy
-app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
-// kraj fix-a
-
-// Registracija
-app.post('/register', async (req, res) => {
-  const { korisnicko_ime, lozinka } = req.body;
-
-  if (!korisnicko_ime || !lozinka) {
-    return res.send({ success: false, message: "Nedostaju podaci" });
+dbConn.connect((err) => {
+  if (err) {
+    console.error("Greška pri spajanju na bazu:", err);
+    return;
   }
 
-  try {
-    // provjera postoji li korisnik
-    dbConn.query(
-      "SELECT * FROM korisnici_test WHERE korisnicko_ime = ?",
-      [korisnicko_ime],
-      async (err, results) => {
-        if (err) return res.send(err);
-
-        if (results.length > 0) {
-          return res.send({ success: false, message: "Korisnik već postoji" });
-        }
-
-        // Hash lozinke
-        const hashedPassword = await bcrypt.hash(lozinka, 10);
-
-        dbConn.query(
-          "INSERT INTO korisnici_test (korisnicko_ime, lozinka) VALUES (?, ?)",
-          [korisnicko_ime, hashedPassword],
-          (err, result) => {
-            if (err) return res.send(err);
-
-            res.send({ success: true, message: "Registracija uspješna" });
-          }
-        );
-      }
-    );
-  } catch (err) {
-    res.send({ success: false, message: "Greška servera" });
-  }
+  console.log("Spojeno na bazu.");
 });
 
-// Login
-// Login
-app.post('/login', (req, res) => {
-  const { korisnicko_ime, lozinka } = req.body;
-
-  dbConn.query(
-    "SELECT * FROM korisnici_test WHERE korisnicko_ime = ?",
-    [korisnicko_ime],
-    async (err, results) => {
-      if (err) return res.send({ success: false, message: "Greška u bazi" });
-
-      if (results.length === 0) {
-        return res.send({ success: false, message: "Korisnik ne postoji" });
-      }
-
-      const user = results[0];
-      const match = await bcrypt.compare(lozinka, user.lozinka);
-
-      if (match) {
-        // ŠALJEMO PODATKE FRONTENDU
-        res.send({ 
-          success: true, 
-          user: {
-            id: user.id_korisnika, // ili kako se već zove tvoj ID stupac
-            korisnicko_ime: user.korisnicko_ime,
-            uloga: user.uloga // Ovdje će pisati 'korisnik' ili 'administrator'
-          } 
-        });
-      } else {
-        res.send({ success: false, message: "Pogrešna lozinka" });
-      }
-    }
-  );
-});
-
-app.post('/unosAtrakcija', function (request, response) {
-  const data = request.body;
-  atrakcija = [[data.naziv, data.opis, data.slika, data.prosjecna_ocjena, data.geografska_duzina, data.geografska_sirina, data.adresa]]
-  
-  dbConn.query('INSERT INTO atrakcije (naziv, opis, slika, prosjecna_ocjena, geografska_duzina, geografska_sirina, adresa ) VALUES ? ',
-  [atrakcija], function (error, results, fields) {
-  if (error) throw error;
-  return response.send({ error: false, data: results, message:'Atrakcija unesena.' });
-  });
-});
-app.post('/dodavanje_slike', function (request, response) {
-  const data = request.body;
-  slika = [[data.id_atrakcije_s, data.slika_s]]
-  
-  dbConn.query('INSERT INTO slike (id_atrakcije_s, slika_s ) VALUES ? ',
-  [slika], function (error, results, fields) {
-  if (error) throw error;
-  return response.send({ error: false, data: results, message:'Slika dodana.' });
-  });
-});
-app.post("/api/unos-slike", function (req, res) {
-  const data = req.body;
-  const slika = data.slika;
-
-  connection.query(
-    "INSERT INTO predmet (slika) VALUES (?)",
-    [slika],
-    function (error, results, fields) {
-      if (error) {
-        console.error(error);
-        return res.status(500).send({
-          error: true,
-          message: "Dogodila se greška prilikom dodavanja teksta.",
-        });
-      }
-      return res.send({
-        error: false,
-        data: results,
-        message: "Slika je dodana.",
-      });
-    }
-  );
-});
-
-
-//uzimanje podataka o atrakcijama
-//racunanje prosjecne ocjene
-app.get('/atrakcije', (req, res) => {
-
-  const limit = parseInt(req.query.limit) || 100; // default ako nema limita
-
-  dbConn.query(`
-    SELECT 
-      a.*, 
-      AVG(o.ocjena) AS avg_ocjena
-    FROM atrakcije a
-    LEFT JOIN Ocjena o 
-      ON a.id_atrakcije = o.VK_ID_Atrakcije
-    GROUP BY a.id_atrakcije
-    LIMIT ?
-  `, [limit], (err, result) => {
-    if (err) {
-      res.send('error');
-    } else {
-      res.send(result);
-    }
-  });
-});
-app.get('/slike', (req,res)=>{
-  dbConn.query("select * from slike", (err,result)=>{
-      if(err){
-          res.send('error');
-      }else{
-          res.send(result);
-      }
-  });
-});
-/// uzimanje podataka o komentarima
-app.get("/komentari", function (request, response) {
-  dbConn.query("SELECT * FROM Komentari", function (error, results, fields) {
-      if (error) throw error;
-      return response.send({
-          error: false,
-          data: results,
-          message: "lista komentara.",
-      });
-  });
-});
-
-
-app.get('/komentari/:id', function (request, response) {
-let id_atrakcije = request.params.id;
-dbConn.query("SELECT * FROM Komentari WHERE VK_ID_atrakcije=?", id_atrakcije, function (error, results, fields) {
-    if (error) throw error;
-    return response.send({
-        error: false,
-        data: results,
-        message: "lista komentara.",
-    });
-});
-});
-// Dodavanje komentara za atrakciju po ID-u
-
-app.post('/dodajKomentar/:id', (req, res) => {
-const data = [req.body.Komentar, req.params.id]
-dbConn.query("INSERT INTO Komentari( Komentar, VK_ID_atrakcije) VALUES (?,?)", data,(err,result)=>{
-  if(err){
-    res.send('Error')
-  }else{
-    res.send(result)
-  }
-})
-});
-
-
-
-//uzimanje podataka o korisnicima
-app.get("/korisnici", function (request, response) {
-    dbConn.query("SELECT * FROM korisnici", function (error, results, fields) {
-        if (error) throw error;
-        return response.send({
-            error: false,
-            data: results,
-            message: "lista korisnika.",
-        });
-    });
-});
-
-
-
-app.get('/atrakcije/:id', function (request, response) {
-  let id_atrakcije = request.params.id;
-
-  dbConn.query(`
-    SELECT 
-      a.*, 
-      AVG(o.ocjena) AS avg_ocjena
-    FROM atrakcije a
-    LEFT JOIN Ocjena o 
-      ON a.id_atrakcije = o.VK_ID_Atrakcije
-    WHERE a.id_atrakcije = ?
-    GROUP BY a.id_atrakcije;
-  `, [id_atrakcije], function (error, results) {
-    if (error) throw error;
-
-    return response.send({
-      data: results[0]
+function queryAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    dbConn.query(sql, params, (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
     });
   });
-});
+}
 
-
-/*
-app.delete('/atrakcije/id', function (request, response) {
-    let id_atrakcije = request.params.id;
-    if (!id_atrakcije) {
-    return response.status(400).send({ error: true, message:
-    'nedostaje id atrakcije' });
-    }
-    dbConn.query("DELETE * FROM atrakcije WHERE id_atrakcije = ?",[id_atrakcije],
-    function (error, results) {
-    if (error) throw error;
-    return response.send({ error: false, data: results, message:
-    'atrakcija je obrisana.' });
-    });
-});*/
-
-
-app.delete('/obrisi_atrakcije/:id', function (request, response){
-
-    
-    let id_atrakcije = request.params.id;
-  
-    console.log(`Received request to delete atrakcija with id: ${id_atrakcije}`); // Log the received id
-  
-    if (!id_atrakcije) {
-      return response.status(400).send({ error: true, message: 'nedostaje id atrakcije' });
-    }
-  
-   const deleteQuery = "DELETE  FROM atrakcije WHERE id_atrakcije = ?";
-     //const deleteQuery = "DELETE  FROM atrakcije WHERE id_atrakcije = '${id}'";
-    dbConn.query(deleteQuery, [id_atrakcije], function (error, results) {
-      if (error) {
-        console.log(`Error when executing the delete query: ${error}`); // Log any error from the query
-        throw error;
-      }
-  
-      console.log('Deletion result: ${JSON.stringify(results)}'); // Log the result of the deletion
-  
-      return response.send({ error: false, data: results, message: 'atrakcija je obrisana obrisi_atrakcije.' });
-    });
-  });
-
-// Dodavanje ocjene za atrakciju u tablicu OCJENE
-app.post('/dodajOcjenuOcjene/:id', (req, res) => {
-  const data = [req.body.ocjena, req.params.id];
-
-  dbConn.query(
-    "INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES (?, ?)",
+function sendSuccess(res, data = null, message = "OK", status = 200) {
+  return res.status(status).json({
+    success: true,
+    message,
     data,
-    (err, result) => {
-      if(err){
-        console.log(err);
-        res.send('Error');
-      } else {
-        res.send(result);
-      }
-    }
-  );
-});
+  });
+}
 
+function sendError(
+  res,
+  message = "Došlo je do greške.",
+  status = 500,
+  error = null
+) {
+  return res.status(status).json({
+    success: false,
+    message,
+    error,
+  });
+}
 
-//DOHVAT PROSJEČNE OCJENE ZA ATRAKCIJU
-app.get('/atrakcijeProsjecneOcjene/:id', (req, res) => {
-  const data = [req.params.id]
-  //SELECT AVG(ocjena) FROM `Ocjena` WHERE VK_ID_Atrakcije = 141
-  dbConn.query("SELECT AVG(ocjena) as prosjek FROM Ocjena WHERE VK_ID_Atrakcije = ?", data,(err,result)=>{
-    if(err){
-      res.send('Error')
-    }else{
-      res.send(result)
-    }
-  })
-});
+function parseId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
 
 /*
-   // Dodavanje ocjene za atrakciju u tablicu OCJENE
- 
-   app.post('/dodajOcjenuOcjene/:id', (req, res) => {
-    const data = [req.body.prosjecna_ocjena, req.params.id]
-    //INSERT INTO `Ocjena`( `ocjena`, `VK_ID_Atrakcije`) VALUES (2,141)
-    dbConn.query("INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES ( ? , ?)", data,(err,result)=>{
-      if(err){
-        res.send('Error')
-      }else{
-        res.send(result)
-      }
-    })
-  });
-*/ 
-
-
-
-
-  app.delete('/obrisi_sliku_atrakcije/:id', function (request, response){
-
-    
-    let id_atrakcije = request.params.id;
-  
-    console.log(`Received request to delete atrakcija with id: ${id_atrakcije}`); // Log the received id
-  
-    if (!id_atrakcije) {
-      return response.status(400).send({ error: true, message: 'nedostaje id atrakcije' });
-    }
-  
-   const deleteQuery = "UPDATE atrakcije SET slika = NULL WHERE id_atrakcije = ?";
-     //const deleteQuery = "DELETE  FROM atrakcije WHERE id_atrakcije = '${id}'";
-    dbConn.query(deleteQuery, [id_atrakcije], function (error, results) {
-      if (error) {
-        console.log(`Error when executing the delete query: ${error}`); // Log any error from the query
-        throw error;
-      }
-  
-      console.log('Deletion result: ${JSON.stringify(results)}'); // Log the result of the deletion
-  
-      return response.send({ error: false, data: results, message: 'slika atrakcija je obrisana ' });
-    });
-  });
-
-
-
+  CHATBOT ROUTER
+*/
+app.use("/api/chatbot", createChatbotRouter({ queryAsync }));
 
 /*
-  app.delete('/obrisi_ocjenu_atrakcije/:id', function (request, response){
+  ATRAKCIJE
+*/
+app.put("/updateImage/:id", async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+    const { slika } = req.body;
 
-    
-    let id_atrakcije = request.params.id;
-  
-    console.log(`Received request to delete atrakcija with id: ${id_atrakcije}`); // Log the received id
-  
-    if (!id_atrakcije) {
-      return response.status(400).send({ error: true, message: 'nedostaje id atrakcije' });
-    }
-  
-   const deleteQuery = "UPDATE atrakcije SET prosjecna_ocjena = NULL WHERE id_atrakcije = ?";
-     //const deleteQuery = "DELETE  FROM atrakcije WHERE id_atrakcije = '${id}'";
-    dbConn.query(deleteQuery, [id_atrakcije], function (error, results) {
-      if (error) {
-        console.log(`Error when executing the delete query: ${error}`); // Log any error from the query
-        throw error;
-      }
-  
-      console.log('Deletion result: ${JSON.stringify(results)}'); // Log the result of the deletion
-  
-      return response.send({ error: false, data: results, message: 'ocjena atrakcija je obrisana ' });
-    });
-  });
-
-  app.put('/dodaj_sliku_atrakcije/:id', function (request, response){
-
-    
-    let id_atrakcije = request.params.id;
-  
-    console.log(`Received request to delete atrakcija with id: ${id_atrakcije}`); // Log the received id
-  
-    if (!id_atrakcije) {
-      return response.status(400).send({ error: true, message: 'nedostaje id atrakcije' });
-    }
-  
-   const deleteQuery = "UPDATE atrakcije SET slika = ? WHERE id_atrakcije = ?";
-     //const deleteQuery = "DELETE  FROM atrakcije WHERE id_atrakcije = '${id}'";
-    dbConn.query(deleteQuery,[slika],[id_atrakcije], function (error, results) {
-      if (error) {
-        console.log(`Error when executing the delete query: ${error}`); // Log any error from the query
-        throw error;
-      }
-  
-      console.log('Deletion result: ${JSON.stringify(results)}'); // Log the result of the deletion
-  
-      return response.send({ error: false, data: results, message: 'slika atrakcija je obrisana ' });
-    });
-  });*/
-
-
-  app.delete('/obrisi_ocjenu_atrakcije/:id', function (request, response){
-
-    
-    let id_atrakcije = request.params.id;
-  
-    console.log(`Received request to delete atrakcija with id: ${id_atrakcije}`); // Log the received id
-  
-    if (!id_atrakcije) {
-      return response.status(400).send({ error: true, message: 'nedostaje id atrakcije' });
-    }
-  
-   const deleteQuery = "UPDATE atrakcije SET prosjecna_ocjena = NULL WHERE id_atrakcije = ?";
-     //const deleteQuery = "DELETE  FROM atrakcije WHERE id_atrakcije = '${id}'";
-    dbConn.query(deleteQuery, [id_atrakcije], function (error, results) {
-      if (error) {
-        console.log(`Error when executing the delete query: ${error}`); // Log any error from the query
-        throw error;
-      }
-  
-      console.log('Deletion result: ${JSON.stringify(results)}'); // Log the result of the deletion
-  
-      return response.send({ error: false, data: results, message: 'ocjena atrakcija je obrisana ' });
-    });
-  });
-//brisanje komentara
-
-app.delete('/obrisi_komentar/:id', function (request, response){
-
-    
-  let id_komentara = request.params.id;
-
-  console.log(`Received request to delete komentar with id: ${id_komentara}`); // Log the received id
-
-  if (!id_komentara) {
-    return response.status(400).send({ error: true, message: 'nedostaje id komentara' });
-  }
-
- const deleteQuery = "DELETE  FROM Komentari WHERE ID_komentara = ?";
-  dbConn.query(deleteQuery, [id_komentara], function (error, results) {
-    if (error) {
-      console.log(`Error when executing the delete query: ${error}`); // Log any error from the query
-      throw error;
+    if (!id) {
+      return sendError(res, "Neispravan ID atrakcije.", 400);
     }
 
-    console.log('Deletion result: ${JSON.stringify(results)}'); // Log the result of the deletion
-
-    return response.send({ error: false, data: results, message: 'komentar je obrisan obrisi komentar.' });
-  });
-});
-
-  app.put('/atrakcije/azuriraj/:id', (req, res) => {
-    console.log(req.body)
-    const data = [req.body.naziv, req.body.opis, req.body.slika, req.body.prosjecna_ocjena, req.body.geografska_sirina, req.body.geografska_duzina, req.body.adresa, req.params.id]
-    dbConn.query("UPDATE atrakcije SET naziv = ?, opis = ?,  slika = ?,  prosjecna_ocjena = ?,  geografska_sirina = ?,  geografska_duzina = ?,  adresa = ? WHERE id_atrakcije = ?", data,(err,result)=>{
-      if(err){
-        res.send('Error' + err)
-      }else{
-        res.send(result)
-      }
-    })
-  });
-  app.post("/dodajSlikuAtrakciji", async (req, res) => {
-    try {
-      const { id_atrakcije, slika, id_korisnika } = req.body;
-
-      dbConn.query(
-        `
-      INSERT INTO slike
-      (id_atrakcije_s, slika_s, id_korisnika)
-      VALUES (?, ?, ?)
-      `,
-        [id_atrakcije, slika, id_korisnika],
-
-        function (error, results, fields) {
-          if (error) {
-            console.error(error);
-
-            return res.status(500).json({
-              success: false,
-              error: "Greška pri spremanju slike.",
-            });
-          }
-
-          return res.json({
-            success: true,
-            message: "Slika uspješno spremljena.",
-          });
-        },
-      );
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        success: false,
-        error: "Greška pri spremanju slike.",
-      });
-    }
-  });
-  app.get("/dohvatiAtrakcije", async (req, res) => {
-    try {
-      dbConn.query(
-        `
-      SELECT *
-      FROM atrakcije
-      `,
-
-        function (error, results, fields) {
-          if (error) {
-            console.error(error);
-
-            return res.status(500).json({
-              error: "Greška pri dohvaćanju atrakcija.",
-            });
-          }
-
-          return res.json(results);
-        },
-      );
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        error: "Greška pri dohvaćanju atrakcija.",
-      });
-    }
-  });
-  app.get("/dohvatiSveSlike", async (req, res) => {
-    try {
-      dbConn.query(
-        `
-      SELECT
-
-        slike.id_slike,
-        slike.slika_s,
-        slike.id_korisnika,
-
-        atrakcije.naziv,
-        atrakcije.id_atrakcije
-
-      FROM slike
-
-      INNER JOIN atrakcije
-      ON slike.id_atrakcije_s = atrakcije.id_atrakcije
-      `,
-
-        function (error, results, fields) {
-          if (error) {
-            console.error(error);
-
-            return res.status(500).json({
-              error: "Greška pri dohvaćanju slika.",
-            });
-          }
-
-          return res.json(results);
-        },
-      );
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        error: "Greška pri dohvaćanju slika.",
-      });
-    }
-  });
-  app.get("/dohvatiSveSlike", async (req, res) => {
-    try {
-      dbConn.query(
-        `
-      SELECT
-
-        slike.id_slike,
-        slike.slika_s,
-
-        atrakcije.naziv,
-        atrakcije.id_atrakcije
-
-      FROM slike
-
-      INNER JOIN atrakcije
-      ON slike.id_atrakcije_s = atrakcije.id_atrakcije
-      `,
-
-        function (error, results, fields) {
-          if (error) {
-            console.error(error);
-
-            return res.status(500).json({
-              error: "Greška pri dohvaćanju slika.",
-            });
-          }
-
-          return res.json(results);
-        },
-      );
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        error: "Greška pri dohvaćanju slika.",
-      });
-    }
-  });
-  app.delete("/obrisiSliku/:id", function (request, response) {
-    let id_slike = request.params.id;
-
-    if (!id_slike) {
-      return response.status(400).send({
-        error: true,
-        message: "nedostaje id slike",
-      });
+    if (!slika) {
+      return sendError(res, "Slika je potrebna.", 400);
     }
 
-    const deleteQuery = "DELETE FROM slike WHERE id_slike = ?";
-
-    dbConn.query(
-      deleteQuery,
-      [id_slike],
-
-      function (error, results) {
-        if (error) {
-          console.log(error);
-
-          return response.status(500).send({
-            error: true,
-            message: "greška pri brisanju slike",
-          });
-        }
-
-        return response.send({
-          error: false,
-          data: results,
-          message: "slika obrisana",
-        });
-      },
+    const result = await queryAsync(
+      "UPDATE atrakcije SET slika = ? WHERE id_atrakcije = ?",
+      [slika, id]
     );
-  });
-//port na kojem je app
-app.listen(4200, function () {
-console.log('Node app is running on port 4200');
+
+    return sendSuccess(res, result, "Slika uspješno ažurirana.");
+  } catch (error) {
+    console.error("Error updating image:", error);
+    return sendError(
+      res,
+      "Došlo je do pogreške prilikom ažuriranja slike.",
+      500,
+      error.message
+    );
+  }
 });
-//module.exports = app;
 
+app.post(
+  "/unosAtrakcija",
+  authJwt.verifyToken("admin, korisnik"),
+  async (req, res) => {
+    try {
+      const data = req.body;
 
+      if (!isNonEmptyString(data.naziv) || !isNonEmptyString(data.opis)) {
+        return sendError(res, "Naziv i opis su obavezni.", 400);
+      }
+
+      const values = [
+        data.naziv,
+        data.opis,
+        data.slika || null,
+        data.prosjecna_ocjena ?? 0,
+        data.geografska_duzina ?? null,
+        data.geografska_sirina ?? null,
+        data.adresa || null,
+        req.userId,
+      ];
+
+      const result = await queryAsync(
+        `INSERT INTO atrakcije 
+        (naziv, opis, slika, prosjecna_ocjena, geografska_duzina, geografska_sirina, adresa, id_korisnik)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        values
+      );
+
+      return sendSuccess(res, result, "Atrakcija uspješno unesena.", 201);
+    } catch (error) {
+      console.error("Error inserting attraction:", error);
+      return sendError(
+        res,
+        "Došlo je do pogreške prilikom unosa atrakcije.",
+        500,
+        error.message
+      );
+    }
+  }
+);
+
+app.post("/dodavanje_slike", async (req, res) => {
+  try {
+    const { id_atrakcije_s, slika_s } = req.body;
+
+    if (!parseId(id_atrakcije_s) || !slika_s) {
+      return sendError(res, "ID atrakcije i slika su obavezni.", 400);
+    }
+
+    const result = await queryAsync(
+      "INSERT INTO slike (id_atrakcije_s, slika_s) VALUES (?, ?)",
+      [id_atrakcije_s, slika_s]
+    );
+
+    return sendSuccess(res, result, "Slika dodana.", 201);
+  } catch (error) {
+    console.error("Greška pri dodavanju slike:", error);
+    return sendError(res, "Greška pri dodavanju slike.", 500, error.message);
+  }
+});
+
+app.post("/api/unos-slike", async (req, res) => {
+  try {
+    const { slika } = req.body;
+
+    if (!slika) {
+      return sendError(res, "Slika je obavezna.", 400);
+    }
+
+    const result = await queryAsync("INSERT INTO predmet (slika) VALUES (?)", [
+      slika,
+    ]);
+
+    return sendSuccess(res, result, "Slika je dodana.", 201);
+  } catch (error) {
+    console.error("Greška kod /api/unos-slike:", error);
+    return sendError(
+      res,
+      "Dogodila se greška prilikom dodavanja slike.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.get("/atrakcije", async (req, res) => {
+  try {
+    const idKorisnika = parseId(req.query.id_korisnik);
+
+    if (!idKorisnika) {
+      return sendError(res, "ID korisnika je potreban.", 400);
+    }
+
+    const result = await queryAsync(
+      "SELECT * FROM atrakcije WHERE id_korisnik = ?",
+      [idKorisnika]
+    );
+
+    return sendSuccess(res, result, "Lista atrakcija korisnika.");
+  } catch (error) {
+    console.error("Error fetching attractions:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju atrakcija.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.get("/natrakcije/:id", async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+
+    if (!id) {
+      return sendError(res, "Neispravan ID atrakcije.", 400);
+    }
+
+    const result = await queryAsync(
+      "SELECT * FROM atrakcije WHERE id_atrakcije = ?",
+      [id]
+    );
+
+    if (!result.length) {
+      return sendError(res, "Atrakcija nije pronađena.", 404);
+    }
+
+    return sendSuccess(res, result[0], "Atrakcija pronađena.");
+  } catch (error) {
+    console.error("Error fetching attraction:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju atrakcije.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.get("/slike", async (req, res) => {
+  try {
+    const result = await queryAsync("SELECT * FROM slike");
+    return sendSuccess(res, result, "Lista slika.");
+  } catch (error) {
+    console.error("Error fetching images:", error);
+    return sendError(res, "Greška pri dohvaćanju slika.", 500, error.message);
+  }
+});
+
+app.get("/sveatrakcije", async (req, res) => {
+  try {
+    const result = await queryAsync("SELECT * FROM atrakcije");
+    return sendSuccess(res, result, "Lista svih atrakcija.");
+  } catch (error) {
+    console.error("Error fetching all attractions:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju svih atrakcija.",
+      500,
+      error.message
+    );
+  }
+});
+
+/*
+  KOMENTARI
+*/
+app.get("/komentari", async (req, res) => {
+  try {
+    const results = await queryAsync("SELECT * FROM Komentari");
+    return sendSuccess(res, results, "Lista komentara.");
+  } catch (error) {
+    console.error("Greška pri dohvaćanju komentara:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju komentara.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.get("/komentari/:id", async (req, res) => {
+  try {
+    const id_atrakcije = parseId(req.params.id);
+
+    if (!id_atrakcije) {
+      return sendError(res, "Neispravan ID atrakcije.", 400);
+    }
+
+    const results = await queryAsync(
+      "SELECT * FROM Komentari WHERE VK_ID_atrakcije = ?",
+      [id_atrakcije]
+    );
+
+    return sendSuccess(res, results, "Lista komentara.");
+  } catch (error) {
+    console.error("Greška pri dohvaćanju komentara po atrakciji:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju komentara.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.post("/dodajKomentar/:id", async (req, res) => {
+  try {
+    const attractionId = parseId(req.params.id);
+    const komentar = req.body.Komentar;
+
+    if (!attractionId || !isNonEmptyString(komentar)) {
+      return sendError(res, "Komentar i ID atrakcije su obavezni.", 400);
+    }
+
+    const result = await queryAsync(
+      "INSERT INTO Komentari (Komentar, VK_ID_atrakcije) VALUES (?, ?)",
+      [komentar.trim(), attractionId]
+    );
+
+    return sendSuccess(res, result, "Komentar uspješno dodan.", 201);
+  } catch (error) {
+    console.error("Error inserting comment:", error);
+    return sendError(
+      res,
+      "Greška pri dodavanju komentara.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.delete("/obrisi_komentar/:id", async (req, res) => {
+  try {
+    const id_komentara = parseId(req.params.id);
+
+    if (!id_komentara) {
+      return sendError(res, "Nedostaje ili nije ispravan ID komentara.", 400);
+    }
+
+    const result = await queryAsync(
+      "DELETE FROM Komentari WHERE ID_komentara = ?",
+      [id_komentara]
+    );
+
+    return sendSuccess(res, result, "Komentar je obrisan.");
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    return sendError(res, "Greška pri brisanju komentara.", 500, error.message);
+  }
+});
+
+/*
+  KORISNICI
+*/
+app.post("/dodajKorisnika", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!isNonEmptyString(email) || !isNonEmptyString(password)) {
+      return sendError(res, "Email i password su obavezni.", 400);
+    }
+
+    const result = await queryAsync(
+      "INSERT INTO korisnici_test (email, password) VALUES (?, ?)",
+      [email.trim(), password]
+    );
+
+    return sendSuccess(res, result, "Korisnik uspješno dodan.", 201);
+  } catch (error) {
+    console.error("Error adding user:", error);
+    return sendError(
+      res,
+      "Greška pri dodavanju korisnika.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.get("/korisnici", async (req, res) => {
+  try {
+    const results = await queryAsync("SELECT * FROM korisnici");
+    return sendSuccess(res, results, "Lista korisnika.");
+  } catch (error) {
+    console.error("Greška pri dohvaćanju korisnika:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju korisnika.",
+      500,
+      error.message
+    );
+  }
+});
+
+/*
+  BRISANJE ATRAKCIJE
+*/
+app.delete("/obrisi_atrakcije/:id_atrakcije", async (req, res) => {
+  try {
+    const id_atrakcije = parseId(req.params.id_atrakcije);
+    const id_korisnik = parseId(req.query.id_korisnik);
+    const uloga = req.query.uloga;
+
+    if (!id_atrakcije) {
+      return sendError(res, "Nedostaje ili nije ispravan ID atrakcije.", 400);
+    }
+
+    if (uloga === "admin") {
+      const deleteResults = await queryAsync(
+        "DELETE FROM atrakcije WHERE id_atrakcije = ?",
+        [id_atrakcije]
+      );
+
+      return sendSuccess(
+        res,
+        deleteResults,
+        "Atrakcija je obrisana od admina."
+      );
+    }
+
+    if (!id_korisnik) {
+      return sendError(res, "Nedostaje ID korisnika.", 400);
+    }
+
+    const results = await queryAsync(
+      "SELECT * FROM atrakcije WHERE id_atrakcije = ? AND id_korisnik = ?",
+      [id_atrakcije, id_korisnik]
+    );
+
+    if (!results.length) {
+      return sendError(res, "Korisnik nema pravo obrisati ovu atrakciju.", 403);
+    }
+
+    const deleteResults = await queryAsync(
+      "DELETE FROM atrakcije WHERE id_atrakcije = ? AND id_korisnik = ?",
+      [id_atrakcije, id_korisnik]
+    );
+
+    return sendSuccess(
+      res,
+      deleteResults,
+      "Atrakcija je obrisana od korisnika."
+    );
+  } catch (error) {
+    console.error("Error deleting attraction:", error);
+    return sendError(res, "Greška pri brisanju atrakcije.", 500, error.message);
+  }
+});
+
+/*
+  OCJENE
+*/
+app.put(
+  "/dodajOcjenu/:id",
+  authJwt.verifyToken("admin, korisnik"),
+  async (req, res) => {
+    try {
+      const attractionId = parseId(req.params.id);
+      const userId = req.userId;
+      const rating = req.body.prosjecna_ocjena;
+
+      if (!attractionId) {
+        return sendError(res, "Neispravan ID atrakcije.", 400);
+      }
+
+      const result = await queryAsync(
+        `UPDATE atrakcije 
+         SET prosjecna_ocjena = ? 
+         WHERE id_atrakcije = ? AND id_korisnik = ?`,
+        [rating, attractionId, userId]
+      );
+
+      if (result.affectedRows === 0) {
+        return sendError(res, "Nema izmjene. Niste ovlašteni.", 403);
+      }
+
+      return sendSuccess(res, result, "Ocjena atrakcije ažurirana.");
+    } catch (error) {
+      console.error("Error updating rating:", error);
+      return sendError(
+        res,
+        "Greška pri ažuriranju ocjene.",
+        500,
+        error.message
+      );
+    }
+  }
+);
+
+app.get("/atrakcijeProsjecneOcjene/:id", async (req, res) => {
+  try {
+    const attractionId = parseId(req.params.id);
+
+    if (!attractionId) {
+      return sendError(res, "Neispravan ID atrakcije.", 400);
+    }
+
+    const result = await queryAsync(
+      "SELECT AVG(ocjena) AS prosjek FROM Ocjena WHERE VK_ID_Atrakcije = ?",
+      [attractionId]
+    );
+
+    return sendSuccess(res, result, "Prosječna ocjena dohvaćena.");
+  } catch (error) {
+    console.error("Error fetching average rating:", error);
+    return sendError(
+      res,
+      "Greška pri dohvaćanju prosječne ocjene.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.post("/dodajOcjenuOcjene/:id", async (req, res) => {
+  try {
+    const attractionId = parseId(req.params.id);
+    const rating = req.body.prosjecna_ocjena;
+
+    if (!attractionId || rating == null) {
+      return sendError(res, "Ocjena i ID atrakcije su obavezni.", 400);
+    }
+
+    const result = await queryAsync(
+      "INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES (?, ?)",
+      [rating, attractionId]
+    );
+
+    return sendSuccess(res, result, "Ocjena uspješno dodana.", 201);
+  } catch (error) {
+    console.error("Error inserting rating:", error);
+    return sendError(res, "Greška pri dodavanju ocjene.", 500, error.message);
+  }
+});
+
+app.delete("/obrisi_ocjenu_atrakcije/:id/:userId", async (req, res) => {
+  try {
+    const id_atrakcije = parseId(req.params.id);
+    const id_korisnik = parseId(req.params.userId);
+
+    if (!id_atrakcije || !id_korisnik) {
+      return sendError(res, "Nedostaje ID atrakcije ili korisnika.", 400);
+    }
+
+    const result = await queryAsync(
+      `UPDATE atrakcije 
+       SET prosjecna_ocjena = NULL 
+       WHERE id_atrakcije = ? AND id_korisnik = ?`,
+      [id_atrakcije, id_korisnik]
+    );
+
+    if (result.affectedRows === 0) {
+      return sendError(
+        res,
+        "Brisanje nije izvršeno. Neovlašten pristup ili zapis ne postoji.",
+        403
+      );
+    }
+
+    return sendSuccess(res, result, "Ocjena atrakcije je obrisana.");
+  } catch (error) {
+    console.error("Error deleting attraction rating:", error);
+    return sendError(
+      res,
+      "Greška pri brisanju ocjene atrakcije.",
+      500,
+      error.message
+    );
+  }
+});
+
+/*
+  SLIKA ATRAKCIJE
+*/
+app.delete("/obrisi_sliku_atrakcije/:id", async (req, res) => {
+  try {
+    const id_atrakcije = parseId(req.params.id);
+
+    if (!id_atrakcije) {
+      return sendError(res, "Nedostaje ili nije ispravan ID atrakcije.", 400);
+    }
+
+    const result = await queryAsync(
+      "UPDATE atrakcije SET slika = NULL WHERE id_atrakcije = ?",
+      [id_atrakcije]
+    );
+
+    return sendSuccess(res, result, "Slika atrakcije je obrisana.");
+  } catch (error) {
+    console.error("Error deleting attraction image:", error);
+    return sendError(
+      res,
+      "Greška pri brisanju slike atrakcije.",
+      500,
+      error.message
+    );
+  }
+});
+
+/*
+  AŽURIRANJE ATRAKCIJE
+*/
+app.put("/updatePost/:id", async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+    const { naziv, opis, adresa } = req.body;
+
+    if (!id) {
+      return sendError(res, "Neispravan ID atrakcije.", 400);
+    }
+
+    const updateFields = [];
+    const updateValues = [];
+
+    if (naziv !== undefined) {
+      updateFields.push("naziv = ?");
+      updateValues.push(naziv);
+    }
+
+    if (opis !== undefined) {
+      updateFields.push("opis = ?");
+      updateValues.push(opis);
+    }
+
+    if (adresa !== undefined) {
+      updateFields.push("adresa = ?");
+      updateValues.push(adresa);
+    }
+
+    if (!updateFields.length) {
+      return sendError(res, "Nema polja za ažuriranje.", 400);
+    }
+
+    updateValues.push(id);
+
+    const updateQuery = `UPDATE atrakcije SET ${updateFields.join(
+      ", "
+    )} WHERE id_atrakcije = ?`;
+
+    const result = await queryAsync(updateQuery, updateValues);
+
+    return sendSuccess(res, result, "Atrakcija uspješno ažurirana.");
+  } catch (error) {
+    console.error("Error updating attraction:", error);
+    return sendError(
+      res,
+      "Došlo je do pogreške prilikom ažuriranja atrakcije.",
+      500,
+      error.message
+    );
+  }
+});
+
+app.put("/atrakcije/azuriraj/:id", async (req, res) => {
+  try {
+    const id = parseId(req.params.id);
+
+    if (!id) {
+      return sendError(res, "Neispravan ID atrakcije.", 400);
+    }
+
+    const data = [
+      req.body.naziv,
+      req.body.opis,
+      req.body.slika,
+      req.body.prosjecna_ocjena,
+      req.body.geografska_sirina,
+      req.body.geografska_duzina,
+      req.body.adresa,
+      id,
+    ];
+
+    const result = await queryAsync(
+      `UPDATE atrakcije 
+       SET naziv = ?, opis = ?, slika = ?, prosjecna_ocjena = ?, 
+           geografska_sirina = ?, geografska_duzina = ?, adresa = ?
+       WHERE id_atrakcije = ?`,
+      data
+    );
+
+    return sendSuccess(res, result, "Atrakcija uspješno ažurirana.");
+  } catch (error) {
+    console.error("Error updating full attraction:", error);
+    return sendError(
+      res,
+      "Greška pri ažuriranju atrakcije.",
+      500,
+      error.message
+    );
+  }
+});
+
+/*
+  AUTH
+*/
+app.post("/register", async (req, res) => {
+  try {
+    const { korisnicko_ime, lozinka } = req.body;
+    const uloga = "korisnik";
+
+    if (!isNonEmptyString(korisnicko_ime) || !isNonEmptyString(lozinka)) {
+      return sendError(res, "Korisničko ime i lozinka su obavezni.", 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(lozinka, saltRounds);
+
+    await queryAsync(
+      "INSERT INTO korisnici_test (korisnicko_ime, lozinka, uloga) VALUES (?, ?, ?)",
+      [korisnicko_ime.trim(), hashedPassword, uloga]
+    );
+
+    return sendSuccess(res, null, "Uspješna registracija", 201);
+  } catch (error) {
+    console.error("Register error:", error);
+    return sendError(
+      res,
+      "Greška prilikom registracije.",
+      500,
+      error.sqlMessage || error.message
+    );
+  }
+});
+
+app.post("/prijavi", async (req, res) => {
+  try {
+    const { korisnicko_ime, lozinka } = req.body;
+
+    if (!isNonEmptyString(korisnicko_ime) || !isNonEmptyString(lozinka)) {
+      return sendError(res, "Korisničko ime i lozinka su obavezni.", 400);
+    }
+
+    const results = await queryAsync(
+      "SELECT * FROM korisnici_test WHERE korisnicko_ime = ?",
+      [korisnicko_ime.trim()]
+    );
+
+    if (!results.length) {
+      return sendError(res, "Korisničko ime nije pronađeno.", 404);
+    }
+
+    const user = results[0];
+    const isMatch = await bcrypt.compare(lozinka, user.lozinka);
+
+    if (!isMatch) {
+      return sendError(res, "Neispravno korisničko ime ili lozinka.", 401);
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id_korisnika,
+        uloga: user.uloga,
+      },
+      config.secret,
+      { expiresIn: "24h" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return sendError(
+      res,
+      "Problem prilikom prijave.",
+      500,
+      error.sqlMessage || error.message
+    );
+  }
+});
+
+/*
+  HEALTH CHECK
+*/
+app.get("/", (req, res) => {
+  return sendSuccess(res, null, "Backend radi.");
+});
+
+/*
+  GLOBAL ERROR HANDLER
+*/
+app.use((err, req, res, next) => {
+  console.error("Unhandled server error:", err);
+  return sendError(res, "Neočekivana greška na serveru.", 500, err.message);
+});
+
+app.listen(PORT, () => {
+  console.log(`Node app is running on port ${PORT}`);
+});

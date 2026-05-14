@@ -2,7 +2,7 @@
   "name": "turisticke",
   "version": "0.0.1",
   "description": "A Quasar Project",
-  "productName": "Quasar App",
+  "productName": "Turisticke atrakcije",
   "author": "dstaresina <dstaresin@veleri.hr>",
   "private": true,
   "scripts": {
@@ -14,6 +14,9 @@
     "@quasar/extras": "^1.0.0",
     "axios": "^1.2.1",
     "browser-image-compression": "^2.0.2",
+    "jwt-decode": "^4.0.0",
+    "leaflet": "^1.9.4",
+    "markdown-it": "^14.1.1",
     "quasar": "^2.6.0",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0"

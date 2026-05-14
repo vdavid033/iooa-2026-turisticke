@@ -1,256 +1,440 @@
 <template>
-  <div style="background-color: #229df9">
-    <div class="q-pa-md row items-start q-gutter-md">
-      <q-card v-for="post in posts" :key="post.id" class="my-card">
-        <q-img :src="post.slika" />
+  <q-page class="home-page">
+    <section class="hero-section">
+      <div class="hero-overlay"></div>
 
-        <q-card-section>
+      <div class="hero-content">
+        <div class="hero-badge">
+          <q-icon name="travel_explore" size="20px" />
+          <span>Turistička aplikacija</span>
+        </div>
+
+        <h1 class="hero-title">
+          Otkrij najljepše turističke atrakcije na jednom mjestu
+        </h1>
+
+        <p class="hero-subtitle">
+          Istraži zanimljive lokacije, pregledaj opise i ocjene atrakcija te
+          pronađi inspiraciju za svoje sljedeće putovanje.
+        </p>
+
+        <div class="hero-actions" v-if="!isLoggedIn">
           <q-btn
-            fab
+            label="Prijava"
+            outline
+            color="white"
+            rounded
+            no-caps
+            size="lg"
+            class="hero-btn-secondary"
+            to="/auth"
+          />
+          <q-btn
+            label="Registracija"
             color="primary"
-            icon="place"
-            class="absolute"
-            style="top: 0; right: 12px; transform: translateY(-50%)"
-            :to="'/one_atraction/' + post.id_atrakcije"
+            rounded
+            unelevated
+            no-caps
+            size="lg"
+            class="hero-btn-primary"
+            to="/registracijaputanja"
           />
+        </div>
+      </div>
+    </section>
 
-          <q-btn
-            fab
-            color="red"
-            icon="delete"
-            class="absolute"
-            style="top: 0px; left: 12px; transform: translateY(-50%)"
-            @click="deleteById(post.id_atrakcije)"
-          />
+    <section class="features-section">
+      <div class="section-header">
+        <h2>Zašto koristiti našu aplikaciju?</h2>
+        <p>
+          Jednostavno pregledaj atrakcije, istraži detalje i organiziraj svoje
+          turističko iskustvo na moderan način.
+        </p>
+      </div>
 
-          <div class="myDiv" style="padding: 10px"></div>
-
-          <div class="row no-wrap items-center">
-            <div class="col text-h6 ellipsis">{{ post.naziv }}</div>
-          </div>
-
-          <q-rating
-            v-model="post.ocjenaUser"
-            :max="5"
-            size="32px"
-            @update:model-value="dodajOcjenu(post.ocjenaUser, post.id_atrakcije)"
-          />
+      <div class="features-grid">
+        <q-card
+          v-for="feature in features"
+          :key="feature.title"
+          class="feature-card"
+          flat
+        >
+          <q-card-section>
+            <div class="feature-icon" :class="feature.colorClass">
+              <q-icon :name="feature.icon" size="32px" />
+            </div>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
           </q-card-section>
+        </q-card>
+      </div>
+    </section>
 
-        <q-card-section class="q-pt-none">
-          <div class="text-subtitle1">{{ post.adresa }}</div>
-          <div class="text-caption text-grey">
-            {{ post.opis }}
-          </div>
-        </q-card-section>
-        <q-card-section>
-          <div>
-            <div>
-              <div v-for="pic in pics" :key="pic.id_atrakcije_s">
-                <q-img v-if="pic.id_atrakcije_s === post.id_atrakcije" :src="pic.slika_s" />
-              </div>
-            </div>
-            <input type="file" @change="onFileChange" />
+    <section class="highlight-section">
+      <div class="section-header">
+        <h2>Izdvojene atrakcije</h2>
+        <p>
+          Pogledaj nekoliko primjera atrakcija koje možeš pronaći unutar
+          aplikacije.
+        </p>
+      </div>
 
-            <q-btn @click="convertImage">Spremi sliku</q-btn>
-            <q-separator></q-separator>
-            <div v-if="base64Image">
-              <img :src="base64Image" />
-              <q-separator></q-separator>
+      <div class="highlights-grid">
+        <q-card
+          v-for="highlight in highlights"
+          :key="highlight.title"
+          class="highlight-card"
+        >
+          <q-img :src="highlight.image" height="220px" />
+          <q-card-section>
+            <div class="text-h6 text-weight-bold">{{ highlight.title }}</div>
+            <div class="text-grey-7">{{ highlight.description }}</div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </section>
 
-              <div
-                class="q-pa-sm"
-                style="max-width: 700px; overflow-wrap: break-word"
-              ></div>
-            </div>
+    <section class="cta-section" v-if="!isLoggedIn">
+      <q-card class="cta-card" flat>
+        <q-card-section class="text-center">
+          <h2>Započni svoje turističko istraživanje već danas</h2>
+          <p>
+            Registriraj se, prijavi i istraži atrakcije kroz moderan i pregledan
+            sustav.
+          </p>
+
+          <div class="cta-actions">
+            <q-btn
+              label="Registracija"
+              color="primary"
+              rounded
+              unelevated
+              no-caps
+              to="/registracijaputanja"
+            />
+            <q-btn
+              label="Prijava"
+              outline
+              color="primary"
+              rounded
+              no-caps
+              to="/auth"
+            />
           </div>
-          <div class="row justify-center q-pa-md">
-            <div class="row justify-center q-pa-md">
-              <q-btn
-                label="Unesi"
-                @click="submitForm(post.id_atrakcije)"
-                color="blue"
-                class="q-ml-sm"
-              />
-            </div>
-          </div>
-          <q-dialog v-model="showDialog">
-            <q-card>
-              <q-card-section> Slika je uspješno dodana! </q-card-section>
-              <q-card-actions align="right">
-                <q-btn
-                  flat
-                  label="Ok"
-                  color="primary"
-                  v-close-popup
-                  @click="closeAndReload"
-                />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
         </q-card-section>
       </q-card>
-    </div>
-  </div>
+    </section>
+  </q-page>
 </template>
+
 <script>
-// eslint-disable-next-line no-unused-vars
-import { QDialog } from "quasar";
-import { isProxy, toRaw } from 'vue';
-import imageCompression from "browser-image-compression";
-// eslint-disable-next-line no-unused-vars
-import axios from "axios"; // Import axios
+import { onMounted, ref } from "vue";
+
+const FEATURES = [
+  {
+    icon: "map",
+    colorClass: "blue",
+    title: "Pregled atrakcija",
+    description:
+      "Brzo pronađi popularne lokacije i istraži što svaka atrakcija nudi.",
+  },
+  {
+    icon: "star",
+    colorClass: "green",
+    title: "Ocjene i dojmovi",
+    description:
+      "Pregledaj ocjene korisnika i lakše odluči koje mjesto vrijedi posjetiti.",
+  },
+  {
+    icon: "explore",
+    colorClass: "orange",
+    title: "Jednostavno istraživanje",
+    description:
+      "Uživaj u modernom prikazu, jednostavnoj navigaciji i preglednom sadržaju.",
+  },
+];
+
+const HIGHLIGHTS = [
+  {
+    title: "Prirodne ljepote",
+    description:
+      "Otkrij parkove, šetnice, vidikovce i prekrasne prirodne lokacije.",
+    image:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Povijesne znamenitosti",
+    description:
+      "Istraži bogatu kulturnu baštinu, stare gradove i povijesne građevine.",
+    image:
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Morski i obalni sadržaji",
+    description:
+      "Pronađi plaže, obalne šetnice i atraktivne destinacije uz more.",
+    image:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+  },
+];
+
 export default {
-  data() {
-    return {
-      inputIdAtrakcije: "",
-      inputSlika: null,
-      slike: [],
-    };
-  },
-  methods: {
-    async onFileChange(e) {
-      this.file = e.target.files[0];
-      await this.convertImage();
-    },
-    async convertImage() {
-      if (!this.file && !this.imageUrl) {
-        return alert("Molimo odaberite sliku ili unesite URL slike.");
-      }
+  name: "IndexPage",
 
-      const options = {
-        maxSizeMB: 1, // Maximum file size in MB
-        maxWidthOrHeight: 1920, // Maximum width or height, whichever is smaller
-        useWebWorker: true,
-      };
+  setup() {
+    const isLoggedIn = ref(false);
+    const features = ref(FEATURES);
+    const highlights = ref(HIGHLIGHTS);
 
-      try {
-        let compressedFile;
-
-        if (this.imageUrl) {
-          const response = await fetch(this.imageUrl);
-          const blob = await response.blob();
-          compressedFile = await imageCompression(blob, options);
-        } else {
-          compressedFile = await imageCompression(this.file, options);
-        }
-
-        const reader = new FileReader();
-        reader.readAsDataURL(compressedFile);
-        reader.onload = () => {
-          this.base64Image = reader.result;
-          this.base64Text = reader.result.replace(
-            /^data:image\/[a-z]+;base64,/,
-            ""
-          );
-          this.inputSlika = "data:image/jpg;base64," + this.base64Text;
-        };
-        reader.onerror = (error) => {
-          console.error(error);
-        };
-        b;
-      } catch (error) {
-        console.error(error);
-        return alert("Došlo je do pogreške prilikom kompresije slike.");
-      }
-    },
-    closeAndReload() {
-      this.showDialog = false;
-      window.location.reload();
-    },
-
-    onFileSelected(event) {
-      this.inputSlika = event.target.files[0];
-    },
-    onUpload() {
-      axios.post;
-    },
-    resetForm() {
-      (this.inputIdAtrakcije = ""), (this.inputSlika = "");
-      this.$refs.slikaRef.resetValidation();
-      this.$refs.IdAtrakcijeRef.resetValidation();
-    },
-    async submitForm(num) {
-      const sampleData = {
-        id_atrakcije_s: num,
-        slika_s: this.inputSlika,
-      };
-      try {
-        const response = await axios.post(
-          "http://localhost:4200/dodavanje_slike",
-          sampleData
-        );
-        console.log(response.data);
-        this.showDialog = true;
-        this.resetForm();
-      } catch (error) {
-        console.error(error);
-      }
-    },
-  },
-};
-</script>
-<script setup>
-import { ref, onMounted } from "vue";
-import { api } from "boot/axios";
-
-const posts = ref([]);
-const pics = ref([]);
-
-const getPosts = async () => {
-  try {
-    const response = await api.get("atrakcije");
-    const response2 = await api.get("slike");
-    posts.value = response.data;
-    pics.value = response2.data;
-
-    // za svaku pojedinacnu atrakciju
-    posts.value.forEach(post => {
-      // avg_ocjena ili nula ak nema ocjene
-      post.ocjenaUser = Number(post.avg_ocjena) || 0;
+    onMounted(() => {
+      isLoggedIn.value = Boolean(localStorage.getItem("token"));
     });
 
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const deleteById = async (id) => {
-  try {
-    //const response = await api.delete('atrakcije/${id}');
-    const response = await api.delete(
-      `http://localhost:4200/obrisi_atrakcije/${id}`
-    );
-    console.log(response.data);
-    // Perform any additional actions after successful deletion
-  } catch (error) {
-    console.log(error);
-  }
-  getPosts();
-};
-
-onMounted(() => {
-  getPosts();
-});
-
-const goToAtrakcijeDetalji = (id) => {
-  router.push({
-    name: "one_atraction",
-    params: {
-      id: id,
-    },
-  });
+    return {
+      isLoggedIn,
+      features,
+      highlights,
+    };
+  },
 };
 </script>
 
-<style>
-.bg-blue {
-  background-color: #1e90ff;
+<style scoped>
+.home-page {
+  background: #f8fafc;
+}
+
+.hero-section {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: linear-gradient(
+      135deg,
+      rgba(15, 32, 39, 0.84),
+      rgba(32, 58, 67, 0.7),
+      rgba(44, 83, 100, 0.78)
+    ),
+    url("https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1600&q=80")
+      center/cover no-repeat;
+  overflow: hidden;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(3px);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  text-align: center;
   color: white;
 }
 
-.my-card {
-  width: 100%;
-  max-width: 300px;
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-bottom: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+}
+
+.hero-title {
+  font-size: 56px;
+  line-height: 1.1;
+  font-weight: 800;
+  margin: 0 0 20px;
+}
+
+.hero-subtitle {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: 19px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-actions {
+  margin-top: 34px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hero-btn-primary,
+.hero-btn-secondary {
+  min-width: 190px;
+  height: 52px;
+  font-weight: 600;
+}
+
+.features-section,
+.highlight-section,
+.cta-section {
+  padding: 80px 24px;
+}
+
+.section-header {
+  max-width: 760px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.section-header h2 {
+  margin: 0 0 12px;
+  font-size: 36px;
+  color: #0f172a;
+}
+
+.section-header p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #64748b;
+}
+
+.features-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.feature-card {
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.feature-card:hover,
+.highlight-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.feature-card h3 {
+  margin: 18px 0 10px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.feature-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.feature-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.feature-icon.blue {
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+}
+
+.feature-icon.green {
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+}
+
+.feature-icon.orange {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+.highlights-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.highlight-card {
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.cta-card {
+  max-width: 900px;
+  margin: 0 auto;
+  border-radius: 28px;
+  padding: 24px;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.cta-card h2 {
+  margin: 0 0 12px;
+  font-size: 34px;
+  color: #0f172a;
+}
+
+.cta-card p {
+  max-width: 680px;
+  margin: 0 auto;
+  color: #64748b;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.cta-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1024px) {
+  .features-grid,
+  .highlights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-title {
+    font-size: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-section,
+  .features-section,
+  .highlight-section,
+  .cta-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .hero-title {
+    font-size: 34px;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+  }
+
+  .section-header h2,
+  .cta-card h2 {
+    font-size: 28px;
+  }
 }
 </style>
