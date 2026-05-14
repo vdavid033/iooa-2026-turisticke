@@ -121,13 +121,30 @@ app.post('/login', (req, res) => {
 
 app.post('/unosAtrakcija', function (request, response) {
   const data = request.body;
-  atrakcija = [[data.naziv, data.opis, data.slika, data.prosjecna_ocjena, data.geografska_duzina, data.geografska_sirina, data.adresa]]
-  
-  dbConn.query('INSERT INTO atrakcije (naziv, opis, slika, prosjecna_ocjena, geografska_duzina, geografska_sirina, adresa ) VALUES ? ',
-  [atrakcija], function (error, results, fields) {
-  if (error) throw error;
-  return response.send({ error: false, data: results, message:'Atrakcija unesena.' });
-  });
+
+  const atrakcija = [
+    data.naziv,
+    data.opis,
+    data.slika,
+    data.prosjecna_ocjena,
+    data.geografska_duzina,
+    data.geografska_sirina,
+    data.adresa,
+    data.id_korisnika
+  ];
+
+  dbConn.query(
+    "INSERT INTO atrakcije (naziv, opis, slika, prosjecna_ocjena, geografska_duzina, geografska_sirina, adresa, id_korisnika) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    atrakcija,
+    function (error, results, fields) {
+      if (error) throw error;
+      return response.send({
+        error: false,
+        data: results,
+        message: 'Atrakcija unesena.'
+      });
+    }
+  );
 });
 app.post('/dodavanje_slike', function (request, response) {
   const data = request.body;
@@ -253,14 +270,9 @@ app.get('/atrakcije/:id', function (request, response) {
   let id_atrakcije = request.params.id;
 
   dbConn.query(`
-    SELECT 
-      a.*, 
-      AVG(o.ocjena) AS avg_ocjena
-    FROM atrakcije a
-    LEFT JOIN Ocjena o 
-      ON a.id_atrakcije = o.VK_ID_Atrakcije
-    WHERE a.id_atrakcije = ?
-    GROUP BY a.id_atrakcije;
+ SELECT id_atrakcije, naziv, opis, slika, prosjecna_ocjena, geografska_sirina, geografska_duzina, adresa, id_korisnika
+FROM atrakcije
+WHERE id_atrakcije = ?
   `, [id_atrakcije], function (error, results) {
     if (error) throw error;
 
@@ -504,6 +516,33 @@ app.delete('/obrisi_komentar/:id', function (request, response){
       }
     })
   });
+
+app.delete('/atrakcije/obrisi/:id_atrakcije/:id_korisnika', function (request, response) {
+  const id_atrakcije = request.params.id_atrakcije;
+  const id_korisnika = request.params.id_korisnika;
+
+  dbConn.query(
+    "DELETE FROM atrakcije WHERE id_atrakcije = ? AND id_korisnika = ?",
+    [id_atrakcije, id_korisnika],
+    function (error, results, fields) {
+      if (error) throw error;
+
+      if (results.affectedRows === 0) {
+        return response.status(403).send({
+          error: true,
+          message: "Nemate pravo obrisati ovu atrakciju."
+        });
+      }
+
+      return response.send({
+        error: false,
+        data: results,
+        message: "Atrakcija je uspješno obrisana."
+      });
+    }
+  );
+});
+
   app.post("/dodajSlikuAtrakciji", async (req, res) => {
     try {
       const { id_atrakcije, slika, id_korisnika } = req.body;

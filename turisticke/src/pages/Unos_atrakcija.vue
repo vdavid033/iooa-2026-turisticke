@@ -222,7 +222,8 @@ export default {
         prosjecna_ocjena: 0,
         geografska_duzina: this.inputDuzina,
         geografska_sirina: this.inputSirina,
-        adresa: this.inputAdresa
+        adresa: this.inputAdresa,
+        id_korisnika: user.id
       };
 
       try {
