@@ -80,7 +80,7 @@
 
       <q-card-section class="chatbot-messages" ref="messagesContainer">
         <div
-          v-for="(msg, index) in messages"
+          v-for="(msg, index) in visibleMessages"
           :key="`${msg.sender}-${index}`"
           :class="['chat-message', msg.sender]"
         >
@@ -253,6 +253,12 @@ export default {
     const canSendMessage = computed(() => {
       return Boolean(userMessage.value.trim()) && !isSending.value;
     });
+
+    const visibleMessages = computed(() =>
+      messages.value.filter(
+        (msg) => msg.sender !== "bot" || Boolean(msg.text?.trim())
+      )
+    );
 
     watch(chatOpen, async (isOpen) => {
       if (!isOpen) return;
@@ -441,23 +447,16 @@ export default {
         throw new Error(errorMessage);
       }
 
-      messages.value.push({
-        sender: "bot",
-        text: "",
-      });
-
-      const botIndex = messages.value.length - 1;
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
 
       let buffer = "";
-      let firstTokenArrived = false;
+      let botIndex = -1;
 
       while (true) {
         const { value, done } = await reader.read();
 
         if (done) {
-          isTyping.value = false;
           break;
         }
 
@@ -470,24 +469,27 @@ export default {
           const { eventName, payload } = event;
 
           if (eventName === "token" && payload?.token) {
-            if (!firstTokenArrived) {
-              firstTokenArrived = true;
+            if (botIndex === -1) {
               isTyping.value = false;
+              messages.value.push({
+                sender: "bot",
+                text: payload.token,
+              });
+              botIndex = messages.value.length - 1;
+            } else {
+              messages.value[botIndex].text += payload.token;
             }
 
-            messages.value[botIndex].text += payload.token;
             await scrollChatToBottom();
           }
 
           if (eventName === "error") {
-            isTyping.value = false;
             throw new Error(
               payload?.message || "Greška tijekom stream odgovora."
             );
           }
 
           if (eventName === "done") {
-            isTyping.value = false;
             await scrollChatToBottom();
             return;
           }
@@ -565,6 +567,7 @@ export default {
       canSendMessage,
       messagesContainer,
       messages,
+      visibleMessages,
       quickQuestions,
       renderMarkdown,
       sendMessage,
