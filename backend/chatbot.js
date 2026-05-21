@@ -6,12 +6,38 @@ const OLLAMA_MODEL = "llama3.2:3b";
 const MAX_HISTORY_MESSAGES = 20;
 const NON_STREAM_TIMEOUT_MS = 60000;
 
+function getErrorMessage(error) {
+  if (!error) return "Nepoznata greška";
+
+  if (error.code === "ECONNREFUSED") {
+    return "Ollama nije dostupna na http://localhost:11434. Pokreni Ollama i model llama3.2:3b.";
+  }
+
+  if (error.response?.data) {
+    const data = error.response.data;
+    if (typeof data === "string" && data.trim()) return data;
+    if (data?.message) return data.message;
+    if (data?.error) return String(data.error);
+  }
+
+  return error.message || error.code || String(error);
+}
+
 function createChatbotRouter({ queryAsync }) {
   if (typeof queryAsync !== "function") {
     throw new Error("createChatbotRouter zahtijeva queryAsync funkciju.");
   }
 
   const router = express.Router();
+
+  async function safeDbQuery(queryFn, fallback = []) {
+    try {
+      return await queryFn();
+    } catch (error) {
+      console.error("Chatbot DB query error:", getErrorMessage(error));
+      return fallback;
+    }
+  }
 
   function normalizeHistory(history = []) {
     if (!Array.isArray(history)) return [];
@@ -179,9 +205,10 @@ function createChatbotRouter({ queryAsync }) {
   }
 
   async function getAllAttractions(limit = 20) {
+    return safeDbQuery(async () => {
     const rows = await queryAsync(
       `
-      SELECT 
+      SELECT
         id_atrakcije,
         naziv,
         opis,
@@ -197,12 +224,14 @@ function createChatbotRouter({ queryAsync }) {
     );
 
     return rows || [];
+    });
   }
 
   async function getTopAttractions(limit = 5) {
+    return safeDbQuery(async () => {
     const rows = await queryAsync(
       `
-      SELECT 
+      SELECT
         id_atrakcije,
         naziv,
         opis,
@@ -218,6 +247,7 @@ function createChatbotRouter({ queryAsync }) {
     );
 
     return rows || [];
+    });
   }
 
   async function searchAttractionsByMessage(message, limit = 10) {
@@ -239,7 +269,7 @@ function createChatbotRouter({ queryAsync }) {
     params.push(limit);
 
     const sql = `
-      SELECT 
+      SELECT
         id_atrakcije,
         naziv,
         opis,
@@ -253,8 +283,10 @@ function createChatbotRouter({ queryAsync }) {
       LIMIT ?
     `;
 
+    return safeDbQuery(async () => {
     const rows = await queryAsync(sql, params);
     return rows || [];
+    });
   }
 
   async function findBestMatchingAttraction(message) {
@@ -265,9 +297,10 @@ function createChatbotRouter({ queryAsync }) {
   async function getCommentsForAttractionId(attractionId, limit = 5) {
     if (!attractionId) return [];
 
+    return safeDbQuery(async () => {
     const rows = await queryAsync(
       `
-      SELECT 
+      SELECT
         ID_komentara,
         Komentar
       FROM Komentari
@@ -279,14 +312,16 @@ function createChatbotRouter({ queryAsync }) {
     );
 
     return rows || [];
+    });
   }
 
   async function getRatingsForAttractionId(attractionId) {
     if (!attractionId) return [];
 
+    return safeDbQuery(async () => {
     const rows = await queryAsync(
       `
-      SELECT 
+      SELECT
         id_ocjene,
         ocjena
       FROM Ocjena
@@ -298,14 +333,16 @@ function createChatbotRouter({ queryAsync }) {
     );
 
     return rows || [];
+    });
   }
 
   async function getImagesForAttractionId(attractionId) {
     if (!attractionId) return [];
 
+    return safeDbQuery(async () => {
     const rows = await queryAsync(
       `
-      SELECT 
+      SELECT
         id_slike,
         id_atrakcije_s
       FROM slike
@@ -317,6 +354,7 @@ function createChatbotRouter({ queryAsync }) {
     );
 
     return rows || [];
+    });
   }
 
   function buildAttractionsContext(attractions) {
@@ -407,7 +445,17 @@ ${extraContext}
     `.trim();
   }
 
+  function getFallbackContext() {
+    return {
+      intent: "general",
+      attractionsContext: "Podaci o atrakcijama trenutno nisu dostupni iz baze.",
+      extraContext:
+        "Odgovori općenito na turistička pitanja o Hrvatskoj, ali nemoj izmišljati konkretne atrakcije iz baze.",
+    };
+  }
+
   async function buildContextForMessage(message) {
+    try {
     const intent = detectIntent(message);
 
     if (intent === "top") {
@@ -511,6 +559,10 @@ ${extraContext}
       extraContext:
         "Korisnik nije postavio strogo strukturirano pitanje pa su kao pomoć dani najrelevantniji podaci iz baze.",
     };
+    } catch (error) {
+      console.error("Chatbot context build error:", getErrorMessage(error));
+      return getFallbackContext();
+    }
   }
 
   async function buildMessages(message, history) {
@@ -562,15 +614,13 @@ ${extraContext}
         reply,
       });
     } catch (error) {
-      console.error(
-        "Chatbot non-stream error:",
-        error?.response?.data || error.message
-      );
+      const detail = getErrorMessage(error);
+      console.error("Chatbot non-stream error:", detail);
 
       return res.status(500).json({
         success: false,
-        message: "Greška pri komunikaciji s lokalnim chatbotom.",
-        error: error?.response?.data || error.message,
+        message: detail || "Greška pri komunikaciji s lokalnim chatbotom.",
+        error: detail,
       });
     }
   });
@@ -695,34 +745,33 @@ ${extraContext}
       });
 
       ollamaStream.on("error", (streamError) => {
-        console.error("Ollama stream error:", streamError.message);
+        const detail = getErrorMessage(streamError);
+        console.error("Ollama stream error:", detail);
 
         if (!responseClosed) {
           sendEvent("error", {
             success: false,
-            message: "Greška tijekom stream odgovora.",
+            message: detail || "Greška tijekom stream odgovora.",
           });
           closeResponse();
         }
       });
     } catch (error) {
-      console.error(
-        "Chatbot stream error:",
-        error?.response?.data || error.message
-      );
+      const detail = getErrorMessage(error);
+      console.error("Chatbot stream error:", detail);
 
       if (!responseClosed && !res.headersSent) {
         return res.status(500).json({
           success: false,
-          message: "Greška pri pokretanju stream odgovora.",
-          error: error?.response?.data || error.message,
+          message: detail || "Greška pri pokretanju stream odgovora.",
+          error: detail,
         });
       }
 
       if (!responseClosed) {
         sendEvent("error", {
           success: false,
-          message: "Greška pri komunikaciji s lokalnim chatbotom.",
+          message: detail || "Greška pri komunikaciji s lokalnim chatbotom.",
         });
         closeResponse();
       }

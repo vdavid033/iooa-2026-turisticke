@@ -50,14 +50,30 @@
           </div>
         </div>
 
-        <q-btn
-          flat
-          round
-          dense
-          icon="close"
-          color="white"
-          @click="chatOpen = false"
-        />
+        <div class="chatbot-header-actions">
+          <q-btn
+            flat
+            round
+            dense
+            icon="delete_outline"
+            color="white"
+            aria-label="Obriši memoriju razgovora"
+            :disable="isSending"
+            @click="clearConversationMemory"
+          >
+            <q-tooltip>Obriši memoriju razgovora</q-tooltip>
+          </q-btn>
+
+          <q-btn
+            flat
+            round
+            dense
+            icon="close"
+            color="white"
+            aria-label="Zatvori chatbot"
+            @click="chatOpen = false"
+          />
+        </div>
       </q-card-section>
 
       <q-separator />
@@ -148,10 +164,47 @@ import {
   watch,
 } from "vue";
 import MarkdownIt from "markdown-it";
+import { Dialog, Notify } from "quasar";
 
 const API_BASE_URL = "http://localhost:4200";
 const CHATBOT_STREAM_URL = `${API_BASE_URL}/api/chatbot/stream`;
-const STORAGE_KEY = "global_chatbot_messages";
+const STORAGE_KEY_PREFIX = "global_chatbot_messages";
+const LEGACY_STORAGE_KEY = "global_chatbot_messages";
+
+function getUserStorageSuffix() {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return "guest";
+
+    const user = JSON.parse(raw);
+    const id = user?.id ?? user?.id_korisnika;
+
+    if (id != null && id !== "") {
+      return String(id);
+    }
+
+    if (user?.korisnicko_ime) {
+      return `name_${user.korisnicko_ime}`;
+    }
+  } catch (error) {
+    console.error("Greška pri čitanju korisnika za chatbot:", error);
+  }
+
+  return "guest";
+}
+
+function getStorageKey() {
+  return `${STORAGE_KEY_PREFIX}_${getUserStorageSuffix()}`;
+}
+
+function getDefaultMessages() {
+  return [
+    {
+      sender: "bot",
+      text: INITIAL_BOT_MESSAGE,
+    },
+  ];
+}
 
 const md = new MarkdownIt({
   html: false,
@@ -193,6 +246,7 @@ export default {
     const messagesContainer = ref(null);
     const streamAbortController = ref(null);
     const quickQuestions = ref(QUICK_QUESTIONS);
+    const lastLoadedUserKey = ref(getUserStorageSuffix());
 
     const messages = ref(loadInitialMessages());
 
@@ -201,15 +255,21 @@ export default {
     });
 
     watch(chatOpen, async (isOpen) => {
-      if (isOpen) {
-        await scrollChatToBottom();
+      if (!isOpen) return;
+
+      const currentUserKey = getUserStorageSuffix();
+      if (currentUserKey !== lastLoadedUserKey.value) {
+        messages.value = loadInitialMessages();
+        lastLoadedUserKey.value = currentUserKey;
       }
+
+      await scrollChatToBottom();
     });
 
     watch(
       () => messages.value,
       async (newMessages) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newMessages));
+        localStorage.setItem(getStorageKey(), JSON.stringify(newMessages));
 
         if (chatOpen.value) {
           await scrollChatToBottom();
@@ -222,7 +282,16 @@ export default {
 
     function loadInitialMessages() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const storageKey = getStorageKey();
+        let saved = localStorage.getItem(storageKey);
+
+        if (!saved && getUserStorageSuffix() === "guest") {
+          saved = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (saved) {
+            localStorage.setItem(storageKey, saved);
+            localStorage.removeItem(LEGACY_STORAGE_KEY);
+          }
+        }
 
         if (saved) {
           const parsed = JSON.parse(saved);
@@ -235,12 +304,46 @@ export default {
         console.error("Greška pri učitavanju chat povijesti:", error);
       }
 
-      return [
-        {
-          sender: "bot",
-          text: INITIAL_BOT_MESSAGE,
+      return getDefaultMessages();
+    }
+
+    async function performClearConversationMemory() {
+      abortActiveStream();
+      isTyping.value = false;
+      isSending.value = false;
+      userMessage.value = "";
+
+      messages.value = getDefaultMessages();
+      localStorage.setItem(getStorageKey(), JSON.stringify(messages.value));
+
+      await scrollChatToBottom();
+    }
+
+    function clearConversationMemory() {
+      Dialog.create({
+        title: "Brisanje memorije",
+        message: "Jeste li sigurni da želite obrisati memoriju razgovora?",
+        ok: {
+          label: "Da, obriši",
+          color: "negative",
+          flat: true,
         },
-      ];
+        cancel: {
+          label: "Odustani",
+          flat: true,
+          color: "grey-7",
+        },
+        persistent: true,
+      }).onOk(async () => {
+        await performClearConversationMemory();
+
+        Notify.create({
+          type: "positive",
+          message: "Memorija razgovora je uspješno obrisana.",
+          position: "top",
+          timeout: 2500,
+        });
+      });
     }
 
     function abortActiveStream() {
@@ -419,9 +522,16 @@ export default {
 
         console.error("Chatbot stream error:", error);
 
+        const backendMessage =
+          error?.message && error.message !== "Failed to fetch"
+            ? error.message
+            : null;
+
         messages.value.push({
           sender: "bot",
-          text: "⚠️ Trenutno ne mogu dohvatiti odgovor od lokalnog AI modela.\n\nProvjeri radi li **backend na portu 4200** i **Ollama na portu 11434**.",
+          text:
+            backendMessage ||
+            "⚠️ Trenutno ne mogu dohvatiti odgovor od lokalnog AI modela.\n\nProvjeri radi li **backend na portu 4200** i **Ollama na portu 11434** (model `llama3.2:3b`).",
         });
       } finally {
         isTyping.value = false;
@@ -460,6 +570,7 @@ export default {
       sendMessage,
       sendQuickMessage,
       handleChatHide,
+      clearConversationMemory,
     };
   },
 };
@@ -515,6 +626,13 @@ export default {
   background: linear-gradient(135deg, #0f172a, #1d4ed8);
   color: white;
   padding: 18px;
+}
+
+.chatbot-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .chatbot-header-left {
