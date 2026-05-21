@@ -27,6 +27,32 @@
                 <div class="q-mt-md">
                   <q-btn-dropdown outline color="white" label="Uredi Atrakciju" icon="edit" dense>
                     <q-list style="min-width: 250px">
+                      <q-item
+                        v-if="user && Number(user.id) === Number(post.id_korisnika)"
+                        clickable
+                        v-close-popup
+                        @click="otvoriUrediAtrakciju(post)">
+                        <q-item-section avatar>
+                          <q-icon name="edit" />
+                        </q-item-section>
+                        <q-item-section>Uredi podatke atrakcije</q-item-section>
+                      </q-item>
+
+                    <q-item
+                      v-if="user && Number(user.id) === Number(post.id_korisnika)"
+                       clickable
+                        v-close-popup
+                        @click="obrisiAtrakciju(post.id_atrakcije)">
+                      <q-item-section avatar>
+                      <q-icon name="delete" color="negative" />
+                      </q-item-section>
+                      <q-item-section>Obriši atrakciju</q-item-section>
+                    </q-item>
+
+                    <q-separator />
+
+                      <q-separator />
+
                       <q-item-section class="q-pa-md">
                         <q-input filled v-model="name" label="Link nove slike" dense />
                         <q-btn color="primary" label="Spremi sliku" class="q-mt-sm" @click="spremiSliku(name, post.id_atrakcije)" />
@@ -158,10 +184,32 @@
         © 2026 Hrvatska Turistička Atrakcija. Sva prava pridržana.
       </div>
     </q-footer>-->
-  </q-layout>
+<q-dialog v-model="editDialog">
+  <q-card style="min-width: 400px">
+    <q-card-section>
+      <div class="text-h6">Uredi atrakciju</div>
+    </q-card-section>
+
+    <q-card-section class="q-gutter-md">
+      <q-input v-model="editForm.naziv" label="Naziv atrakcije" filled />
+      <q-input v-model="editForm.opis" label="Opis atrakcije" filled type="textarea" />
+      <q-input v-model="editForm.adresa" label="Adresa" filled />
+      <q-input v-model="editForm.geografska_sirina" label="Geografska širina" filled />
+      <q-input v-model="editForm.geografska_duzina" label="Geografska dužina" filled />
+    </q-card-section>
+
+    <q-card-actions align="right">
+      <q-btn flat label="Odustani" color="grey" v-close-popup />
+      <q-btn label="Spremi promjene" color="primary" @click="spremiUredenuAtrakciju" />
+    </q-card-actions>
+  </q-card>
+</q-dialog>
+
+</q-layout>
 </template>
 
 <script setup>
+
 import { ref, onMounted } from "vue"
 import { api } from 'boot/axios'
 import { useRoute, useRouter } from 'vue-router';
@@ -173,6 +221,7 @@ const route = useRoute()
 const router = useRouter()
 const komentar = ref('')
 const message = ref('')
+const user = ref(JSON.parse(localStorage.getItem("user")))
 
 const trenutniID = route.params.id
 
@@ -180,6 +229,8 @@ const getPosts = async () => {
   try {
     const response = await api.get(`/atrakcije/${trenutniID}`)
     posts.value = response.data
+    console.log("USER IZ LOCALSTORAGE:", user.value)
+    console.log("ATRAKCIJA:", posts.value)
     const komentari = await api.get(`/komentari/${trenutniID}`)
     comments.value = komentari.data.data
   } catch (error) {
@@ -223,6 +274,73 @@ const deleteOcjena = async (id) => {
     console.log(error);
   }
 }
+const otvoriUrediAtrakciju = (post) => {
+  const user = JSON.parse(localStorage.getItem("user"))
+
+  if (!user) {
+    alert("Morate biti prijavljeni kako biste uredili atrakciju.")
+    router.push("/auth")
+    return
+  }
+
+  editForm.value = {
+    id_atrakcije: post.id_atrakcije,
+    naziv: post.naziv,
+    opis: post.opis,
+    adresa: post.adresa,
+    geografska_sirina: post.geografska_sirina,
+    geografska_duzina: post.geografska_duzina,
+    slika: post.slika,
+    prosjecna_ocjena: post.prosjecna_ocjena || 0
+  }
+
+  editDialog.value = true
+}
+
+const spremiUredenuAtrakciju = async () => {
+  if (!editForm.value.naziv || !editForm.value.opis) {
+    alert("Naziv i opis atrakcije su obavezni.")
+    return
+  }
+
+  try {
+    await api.put(`/atrakcije/azuriraj/${editForm.value.id_atrakcije}`, {
+      naziv: editForm.value.naziv,
+      opis: editForm.value.opis,
+      slika: editForm.value.slika,
+      prosjecna_ocjena: editForm.value.prosjecna_ocjena,
+      geografska_sirina: editForm.value.geografska_sirina,
+      geografska_duzina: editForm.value.geografska_duzina,
+      adresa: editForm.value.adresa
+    })
+
+    editDialog.value = false
+    await getPosts()
+
+    alert("Atrakcija je uspješno uređena.")
+  } catch (error) {
+    console.log(error)
+    alert("Greška pri uređivanju atrakcije.")
+  }
+}
+
+const obrisiAtrakciju = async (id_atrakcije) => {
+  const potvrda = confirm("Jeste li sigurni da želite obrisati ovu atrakciju?")
+
+  if (!potvrda) {
+    return
+  }
+
+  try {
+    await api.delete(`/atrakcije/obrisi/${id_atrakcije}/${user.value.id}`)
+
+    alert("Atrakcija je uspješno obrisana.")
+    router.push("/atrakcije")
+  } catch (error) {
+    console.log(error)
+    alert("Greška pri brisanju atrakcije.")
+  }
+}
 
 onMounted(() => {
   getPosts()
@@ -248,7 +366,18 @@ const dodajKomentar = async (komentarTekst, id) => {
     console.log(error)
   }
 }
+const editDialog = ref(false)
 
+const editForm = ref({
+  id_atrakcije: null,
+  naziv: '',
+  opis: '',
+  adresa: '',
+  geografska_sirina: '',
+  geografska_duzina: '',
+  slika: '',
+  prosjecna_ocjena: 0
+})
 </script>
 
 <style scoped>

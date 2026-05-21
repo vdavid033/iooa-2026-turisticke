@@ -1,106 +1,98 @@
 <template>
   <div class="bg-image">
     <q-page padding class="flex flex-center">
-      <q-card style="width: 350px">
-        <q-card-section>
-          <div class="q-gutter-md full-with" style="max-width: 500px">
-            <div class="full-with">
-              <div class="q-gutter-md" style="max-width: 350px">
-                <p
-                  class="text-h5 text-weight-light text-center"
-                  style="color: #2196f3"
-                >
-                  Unos nove atrakcije
-                </p>
-                <q-input
-                  ref="nazivRef"
-                  v-model="inputNaziv"
-                  label="Naziv"
-                  placeholder="Naziv atrakcije"
-                >
-                </q-input>
+      <q-card style="width: 500px; max-width: 90vw">
+  <q-card-section>
+    <div class="text-h6 text-primary text-center">
+      Unos nove atrakcije
+    </div>
+    <div class="text-grey text-center">
+      Dodaj novu turističku atrakciju
+    </div>
+  </q-card-section>
 
-                <q-input
-                  ref="opisRef"
-                  v-model="inputOpis"
-                  label="Opis"
-                  placeholder="Opis atrakcije"
-                >
-                </q-input>
+  <q-card-section class="q-gutter-md">
+    <q-input
+      ref="nazivRef"
+      v-model="inputNaziv"
+      label="Naziv atrakcije"
+      filled
+    />
 
-                <q-input
-                  ref="adresaRef"
-                  v-model="inputAdresa"
-                  label="Adresa"
-                  placeholder="Adresa atrakcije"
-                >
-                </q-input>
+    <q-input
+      ref="opisRef"
+      v-model="inputOpis"
+      label="Opis atrakcije"
+      filled
+      type="textarea"
+    />
 
-                <q-input
-                  ref="sirinaRef"
-                  v-model="inputSirina"
-                  label="Širina"
-                  placeholder="Grografska Širina atr"
-                >
-                </q-input>
+    <q-input
+      ref="adresaRef"
+      v-model="inputAdresa"
+      label="Adresa"
+      filled
+    />
 
-                <q-input
-                  ref="duzinaRef"
-                  v-model="inputDuzina"
-                  label="Dužina"
-                  placeholder="Geografska dužina atr"
-                >
-                </q-input>
+    <q-input
+      ref="sirinaRef"
+      v-model="inputSirina"
+      label="Geografska širina"
+      filled
+    />
 
-                <div>
-                  <input type="file" @change="onFileChange" />
+    <q-input
+      ref="duzinaRef"
+      v-model="inputDuzina"
+      label="Geografska dužina"
+      filled
+    />
 
-                  <q-btn @click="convertImage">Spremi sliku</q-btn>
-                  <q-separator></q-separator>
-                  <div v-if="base64Image">
-                    <img :src="base64Image" />
-                    <q-separator></q-separator>
+    <div>
+      <input type="file" accept="image/*" @change="onFileChange" />
 
-                    <div
-                      class="q-pa-sm"
-                      style="max-width: 700px; overflow-wrap: break-word"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              <div
-                class="q-pa-sm"
-                style="max-width: 700px; overflow-wrap: break-word"
-              ></div>
-            </div>
-          </div>
-          <div class="row justify-center q-pa-md">
-            <div class="row justify-center q-pa-md">
-              <q-btn
-                label="Unesi"
-                @click="submitForm"
-                color="blue"
-                class="q-ml-sm"
-              />
-            </div>
-          </div>
+      <div v-if="base64Image" class="q-mt-md">
+        <img
+          :src="base64Image"
+          style="max-width: 100%; max-height: 200px; border-radius: 8px;"
+        />
+      </div>
+    </div>
+  </q-card-section>
 
-          <q-dialog v-model="showDialog">
-            <q-card>
-              <q-card-section> Atrakcija je uspješno dodana! </q-card-section>
-              <q-card-actions align="right">
-                <q-btn
-                  flat
-                  label="Ok"
-                  color="primary"
-                  v-close-popup
-                  @click="closeAndReload"
-                />
-              </q-card-actions>
-            </q-card>
-          </q-dialog>
-        </q-card-section>
-      </q-card>
+  <q-card-actions align="right">
+    <q-btn
+      flat
+      label="Odustani"
+      color="grey"
+      @click="$router.push('/atrakcije')"
+    />
+
+    <q-btn
+      label="Spremi atrakciju"
+      color="primary"
+      @click="submitForm"
+    />
+  </q-card-actions>
+
+  <q-dialog v-model="showDialog">
+    <q-card>
+      <q-card-section>
+        Atrakcija je uspješno dodana!
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn
+          flat
+          label="OK"
+          color="primary"
+          v-close-popup
+          @click="closeAndReload"
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+</q-card>
     </q-page>
   </div>
 </template>
@@ -187,19 +179,22 @@ export default {
       axios.post;
     },
     resetForm() {
-      this.inputNaziv = "";
-      this.inputOpis = "";
-      this.inputDuzina = "";
-      this.inputSirina = "";
-      this.inputAdresa = "";
-      this.inputSlika = "";
-      this.$refs.slikaRef.resetValidation();
-      this.$refs.nazivRef.resetValidation();
-      this.$refs.opisRef.resetValidation();
-      this.$refs.duzinaRef.resetValidation();
-      this.$refs.sirinaRef.resetValidation();
-      this.$refs.adresaRef.resetValidation();
-    },
+  this.inputNaziv = "";
+  this.inputOpis = "";
+  this.inputDuzina = "";
+  this.inputSirina = "";
+  this.inputAdresa = "";
+  this.inputSlika = "";
+  this.file = null;
+  this.base64Image = "";
+  this.base64Text = "";
+
+  this.$refs.nazivRef.resetValidation();
+  this.$refs.opisRef.resetValidation();
+  this.$refs.duzinaRef.resetValidation();
+  this.$refs.sirinaRef.resetValidation();
+  this.$refs.adresaRef.resetValidation();
+},
     async submitForm() {
 
       const user = JSON.parse(localStorage.getItem("user"));
@@ -222,7 +217,8 @@ export default {
         prosjecna_ocjena: 0,
         geografska_duzina: this.inputDuzina,
         geografska_sirina: this.inputSirina,
-        adresa: this.inputAdresa
+        adresa: this.inputAdresa,
+        id_korisnika: user.id
       };
 
       try {

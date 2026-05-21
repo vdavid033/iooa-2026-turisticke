@@ -27,7 +27,11 @@
           <div class="text-grey">Add, view, and manage attractions</div>
         </div>
 
-        <q-btn color="amber" icon="add" label="Add Attraction" />
+        <q-btn
+          color="amber"
+          icon="add"
+          label="Add Attraction"
+          @click="showAddAttractionDialog = true"/>
       </div>
 
       <!-- STATISTIKA -->
@@ -199,11 +203,41 @@
       </q-card>
 
     </div>
+    <q-dialog v-model="showAddAttractionDialog">
+  <q-card style="min-width: 450px">
+    <q-card-section>
+      <div class="text-h6">Dodaj novu atrakciju</div>
+    </q-card-section>
 
+    <q-card-section class="q-gutter-md">
+      <q-input v-model="newAttraction.naziv" label="Naziv atrakcije" filled />
+      <q-input v-model="newAttraction.opis" label="Opis atrakcije" filled type="textarea" />
+      <q-input v-model="newAttraction.adresa" label="Adresa" filled />
+      <q-input v-model="newAttraction.geografska_sirina" label="Geografska širina" filled />
+      <q-input v-model="newAttraction.geografska_duzina" label="Geografska dužina" filled />
+      <div>
+  <input type="file" accept="image/*" @change="onAdminFileChange" />
+
+  <div v-if="newAttraction.slika" class="q-mt-md">
+    <img
+      :src="newAttraction.slika"
+      style="max-width: 100%; max-height: 200px; border-radius: 8px;"
+    />
+  </div>
+</div>
+    </q-card-section>
+
+    <q-card-actions align="right">
+      <q-btn flat label="Odustani" color="grey" v-close-popup />
+      <q-btn label="Spremi atrakciju" color="primary" @click="addAttraction" />
+    </q-card-actions>
+</q-card>
+</q-dialog>
   </q-page>
 </template>
 
 <script>
+import imageCompression from "browser-image-compression"
 import { ref, onMounted, computed } from "vue"
 import axios from "axios"
 import { Notify } from "quasar"
@@ -219,6 +253,17 @@ export default {
     // ATRAKCIJE
     // =====================
     const attractions = ref([])
+
+   const showAddAttractionDialog = ref(false)
+
+const newAttraction = ref({
+  naziv: '',
+  opis: '',
+  adresa: '',
+  geografska_sirina: '',
+  geografska_duzina: '',
+  slika: null
+})
 
     const fetchAttractions = async () => {
       const res = await axios.get("http://localhost:4200/atrakcije")
@@ -316,6 +361,78 @@ export default {
         console.error(error)
       }
     }
+    const onAdminFileChange = async (event) => {
+  const file = event.target.files[0]
+
+  if (!file) {
+    return
+  }
+
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true
+  }
+
+  try {
+    const compressedFile = await imageCompression(file, options)
+    const reader = new FileReader()
+
+    reader.readAsDataURL(compressedFile)
+
+    reader.onload = () => {
+      newAttraction.value.slika = reader.result
+    }
+
+    reader.onerror = (error) => {
+      console.log(error)
+      alert("Greška pri učitavanju slike.")
+    }
+  } catch (error) {
+    console.log(error)
+    alert("Greška pri kompresiji slike.")
+  }
+}
+
+const addAttraction = async () => {
+  const user = JSON.parse(localStorage.getItem("user"))
+
+  if (!newAttraction.value.naziv || !newAttraction.value.opis) {
+    alert("Naziv i opis atrakcije su obavezni.")
+    return
+  }
+
+  try {
+    await axios.post("http://localhost:4200/unosAtrakcija", {
+      naziv: newAttraction.value.naziv,
+      opis: newAttraction.value.opis,
+      slika: newAttraction.value.slika || null,
+      prosjecna_ocjena: 0,
+      geografska_duzina: newAttraction.value.geografska_duzina,
+      geografska_sirina: newAttraction.value.geografska_sirina,
+      adresa: newAttraction.value.adresa,
+      id_korisnika: null
+    })
+
+    alert("Atrakcija je uspješno dodana.")
+
+    showAddAttractionDialog.value = false
+
+    newAttraction.value = {
+      naziv: '',
+      opis: '',
+      adresa: '',
+      geografska_sirina: '',
+      geografska_duzina: '',
+      slika: null
+    }
+
+    await fetchAttractions()
+  } catch (error) {
+    console.log(error)
+    alert("Greška pri dodavanju atrakcije.")
+  }
+}
 
     // =====================
     // LOAD
@@ -346,6 +463,10 @@ export default {
       // atrakcije
       attractions,
       deleteAttraction,
+      showAddAttractionDialog,
+      newAttraction,
+      onAdminFileChange,
+      addAttraction,
 
       // komentari
       comments,

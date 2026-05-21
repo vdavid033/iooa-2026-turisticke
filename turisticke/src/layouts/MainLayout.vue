@@ -95,6 +95,13 @@
     target: "_self",
   },
   {
+  title: "Karta atrakcija",
+  caption: "prikaz atrakcija na karti",
+  icon: "map",
+  link: "/karta-atrakcija",
+  target: "_self",
+  },
+  {
     title: "Unos atrakcija",
     caption: "nos novih atrakcija",
     icon: "swap_horizontal_circle",

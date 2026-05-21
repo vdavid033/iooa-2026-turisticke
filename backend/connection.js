@@ -1,7 +1,7 @@
 const mysql = require('mysql');
 const con = mysql.createConnection({
     host: 'ucka.veleri.hr',
-    user:'a-mioc',
+    user:'amioc',
     password:'11', 
     database:'amioc'
 });

@@ -7,7 +7,7 @@
             Karta atrakcija
           </h1>
           <p class="text-grey-7 q-mt-sm q-mb-none">
-            Pregled svih atrakcija na karti. Klikom na marker otvara se detalj atrakcije.
+            Pregled svih atrakcija na karti. Klikom na marker otvara se mali prozor s detaljima atrakcije.
           </p>
         </div>
 
@@ -15,9 +15,9 @@
           unelevated
           rounded
           color="primary"
-          icon="list"
-          label="Sve atrakcije"
-          to="/atrakcije"
+          icon="arrow_back"
+          label="Natrag"
+          to="/"
           no-caps
         />
       </div>
@@ -97,21 +97,46 @@ const renderMarkers = () => {
     const lat = parseFloat(attr.geografska_sirina)
     const lng = parseFloat(attr.geografska_duzina)
 
+    const shortOpis = attr.opis
+      ? attr.opis.length > 120
+        ? attr.opis.substring(0, 120) + '...'
+        : attr.opis
+      : 'Nema opisa za ovu atrakciju.'
+
+    const popupContent = `
+      <div class="popup-card">
+        <img
+          src="${attr.slika || 'https://via.placeholder.com/250x140?text=Atrakcija'}"
+          alt="${attr.naziv || 'Atrakcija'}"
+          class="popup-image"
+        />
+        <div class="popup-title">${attr.naziv ?? 'Atrakcija'}</div>
+        <div class="popup-address">${attr.adresa ?? ''}</div>
+        <div class="popup-description">${shortOpis}</div>
+        <button class="popup-btn" data-id="${attr.id_atrakcije}">
+          Otvori stranicu atrakcije
+        </button>
+      </div>
+    `
+
     const marker = L.marker([lat, lng]).addTo(markersLayer)
 
-    marker.bindPopup(`
-      <div style="min-width: 220px">
-        <strong>${attr.naziv ?? 'Atrakcija'}</strong><br>
-        <span>${attr.adresa ?? ''}</span><br><br>
-        <small>Klikni na marker za otvaranje detalja.</small>
-      </div>
-    `)
+    marker.bindPopup(popupContent, { maxWidth: 280 })
 
-    marker.on('click', () => {
-      router.push({
-        name: 'one_atraction',
-        params: { id: attr.id_atrakcije }
-      })
+    marker.on('popupopen', () => {
+      setTimeout(() => {
+        const button = document.querySelector(`.popup-btn[data-id="${attr.id_atrakcije}"]`)
+        if (button) {
+          button.addEventListener('click', () => {
+            const routeData = router.resolve({
+              name: 'one_atraction',
+              params: { id: attr.id_atrakcije }
+            })
+
+            window.open(routeData.href, '_blank', 'noopener,noreferrer')
+          })
+        }
+      }, 0)
     })
 
     bounds.push([lat, lng])
@@ -163,5 +188,53 @@ onMounted(() => {
 
 .rounded-borders {
   border-radius: 16px;
+}
+
+:deep(.popup-card) {
+  width: 240px;
+  font-family: Arial, sans-serif;
+}
+
+:deep(.popup-image) {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+:deep(.popup-title) {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4f46e5;
+  margin-bottom: 4px;
+}
+
+:deep(.popup-address) {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+:deep(.popup-description) {
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+:deep(.popup-btn) {
+  width: 100%;
+  border: none;
+  background: #fbbf24;
+  color: #000;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+:deep(.popup-btn:hover) {
+  background: #f59e0b;
 }
 </style>
