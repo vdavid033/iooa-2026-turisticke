@@ -13,6 +13,7 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true})); 
 app.use(express.json());
 const dbConfig = require("./dbConfig");
+const createChatbotRouter = require("./chatbot");
 
 app.use(cors());
 //const cors = require('cors');
@@ -31,6 +32,15 @@ var dbConn = mysql.createConnection({
 //spajanje s bazom
 dbConn.connect();
 
+function queryAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    dbConn.query(sql, params, (err, results) => {
+      if (err) return reject(err);
+      resolve(results);
+    });
+  });
+}
+
 
 
 
@@ -44,6 +54,8 @@ app.use(function (req, res, next) {
     next();
 });
 // kraj fix-a
+
+app.use("/api/chatbot", createChatbotRouter({ queryAsync }));
 
 // Registracija
 app.post('/register', async (req, res) => {

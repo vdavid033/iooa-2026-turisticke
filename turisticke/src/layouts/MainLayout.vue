@@ -70,6 +70,8 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <GlobalChatbot />
   </q-layout>
 </template>
 
@@ -136,12 +138,14 @@
 
 import { defineComponent, ref, computed } from "vue";
 import EssentialLink from "components/EssentialLink.vue";
+import GlobalChatbot from "components/GlobalChatbot.vue";
 
 export default defineComponent({
   name: "MainLayout",
 
   components: {
     EssentialLink,
+    GlobalChatbot,
   },
 
   setup() {
