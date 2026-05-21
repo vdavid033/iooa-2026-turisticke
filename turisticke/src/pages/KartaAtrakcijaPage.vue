@@ -128,10 +128,12 @@ const renderMarkers = () => {
         const button = document.querySelector(`.popup-btn[data-id="${attr.id_atrakcije}"]`)
         if (button) {
           button.addEventListener('click', () => {
-            router.push({
+            const routeData = router.resolve({
               name: 'one_atraction',
               params: { id: attr.id_atrakcije }
             })
+
+            window.open(routeData.href, '_blank', 'noopener,noreferrer')
           })
         }
       }, 0)
