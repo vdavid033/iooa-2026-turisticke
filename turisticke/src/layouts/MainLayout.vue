@@ -190,18 +190,6 @@ export default defineComponent({
           link: "/karta-atrakcija"
         },
         {
-          title: "Testiranje Axiosa",
-          caption: "služi za testiranje Axiosa",
-          icon: "swap_horizontal_circle",
-          link: "/axo"
-        },
-        {
-          title: "Dodavanje slika",
-          caption: "Dodavanje dodatnih slika",
-          icon: "swap_horizontal_circle",
-          link: "/dodavanje slika"
-        },
-        {
           title: "Galerija slika",
           caption: "Galerija slika korisnika",
           icon: "swap_horizontal_circle",

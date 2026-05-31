@@ -731,6 +731,34 @@ app.delete('/atrakcije/obrisi/:id_atrakcije/:id_korisnika', function (request, r
       },
     );
   });
+  app.get("/dohvatiSlikeAtrakcije/:id", async (req, res) => {
+    try {
+      dbConn.query(
+        `
+      SELECT
+        id_slike,
+        slika_s,
+        id_korisnika
+      FROM slike
+      WHERE id_atrakcije_s = ?
+      `,
+        [req.params.id],
+        function (error, results) {
+          if (error) {
+            return res.status(500).json({
+              error: "Greška pri dohvaćanju slika.",
+            });
+          }
+
+          return res.json(results);
+        },
+      );
+    } catch (error) {
+      res.status(500).json({
+        error: "Greška pri dohvaćanju slika.",
+      });
+    }
+  });
 //port na kojem je app
 app.listen(4200, function () {
 console.log('Node app is running on port 4200');

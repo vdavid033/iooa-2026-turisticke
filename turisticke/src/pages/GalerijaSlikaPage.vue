@@ -23,6 +23,10 @@
 
     </div>
 
+    <div class="row justify-center q-mb-lg">
+      <q-btn color="primary" icon="add_photo_alternate" label="Dodaj sliku" @click="uploadDialog = true" />
+    </div>
+
     <div class="row q-col-gutter-lg">
 
       <div
@@ -96,11 +100,30 @@
 
     </q-dialog>
 
+
+    <q-dialog v-model="uploadDialog">
+      <q-card style="width:700px;max-width:95vw">
+        <q-card-section><div class="text-h5 text-primary">Dodavanje slike</div></q-card-section>
+        <q-separator />
+        <q-card-section>
+          <q-select v-model="uploadAtrakcija" :options="atrakcije" option-label="naziv" option-value="id_atrakcije" emit-value map-options outlined label="Odaberite atrakciju" class="q-mb-lg" />
+          <input v-if="!file" type="file" accept=".jpg,.jpeg,.png" @change="onFileChange" />
+          <div class="q-mt-lg" v-if="previewImage">
+            <q-img :src="previewImage" style="height:350px" fit="contain" />
+          </div>
+        </q-card-section>
+        <q-card-actions align="center">
+          <q-btn color="primary" label="Spremi sliku" @click="uploadImage" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
   </q-page>
 </template>
 
 <script>
 import axios from "axios";
+import imageCompression from "browser-image-compression";
 
 export default {
 
@@ -118,7 +141,14 @@ export default {
 
       odabranaAtrakcija: null,
 
-      user: null
+      user: null,
+
+      uploadDialog: false,
+      atrakcije: [],
+      uploadAtrakcija: null,
+      file: null,
+      previewImage: "",
+      base64Image: ""
 
     };
   },
@@ -169,6 +199,7 @@ export default {
     this.user = JSON.parse(localStorage.getItem("user"));
 
     this.dohvatiSlike();
+    this.dohvatiAtrakcije();
 
   },
 
@@ -221,6 +252,16 @@ export default {
 
       }
     }
+,
+
+    async dohvatiAtrakcije() { const response = await axios.get("http://localhost:4200/dohvatiAtrakcije"); this.atrakcije=response.data; },
+
+    async onFileChange(event){ const selectedFile=event.target.files[0]; if(!selectedFile)return; this.file=selectedFile; await this.convertImage(); },
+
+    async convertImage(){ const compressedFile=await imageCompression(this.file,{maxSizeMB:1,maxWidthOrHeight:1920,useWebWorker:true}); const reader=new FileReader(); reader.readAsDataURL(compressedFile); reader.onload=()=>{this.previewImage=reader.result; this.base64Image=reader.result;}},
+
+    async uploadImage(){ const data={id_atrakcije:this.uploadAtrakcija,slika:this.base64Image,id_korisnika:this.user.id}; await axios.post("http://localhost:4200/dodajSlikuAtrakciji",data); this.uploadDialog=false; this.previewImage=""; this.base64Image=""; this.file=null; this.uploadAtrakcija=null; await this.dohvatiSlike();}
+
 
   }
 };

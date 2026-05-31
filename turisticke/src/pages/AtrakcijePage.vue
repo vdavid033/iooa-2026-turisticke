@@ -83,6 +83,32 @@
               <div class="text-h5 text-purple-9 text-weight-bold q-mb-md">O Atrakciji</div>
               <div class="text-body1 text-grey-9 line-height-relaxed">
                 {{ post.opis }}
+
+              <q-separator class="q-my-lg" />
+
+              <div v-if="slikeAtrakcije.length">
+                <div class="text-h5 text-purple-9 text-weight-bold q-mb-md">
+                  Fotografije posjetitelja
+                </div>
+
+                <div class="row q-col-gutter-md">
+                  <div
+                    v-for="slika in slikeAtrakcije"
+                    :key="slika.id_slike"
+                    class="col-12 col-sm-6 col-md-4"
+                  >
+                    <q-card flat bordered>
+                      <q-img
+                        :src="slika.slika_s"
+                        style="height:250px"
+                        fit="cover"
+                        class="cursor-pointer"
+                        @click="otvoriSliku(slika.slika_s)"
+                      />
+                    </q-card>
+                  </div>
+                </div>
+              </div>
               </div>
 
               <q-separator class="q-my-lg" />
@@ -177,7 +203,7 @@
       </q-page>
     </q-page-container>
 
-    <!-- FOOTER (Tamni kao na slici) 
+    <!-- FOOTER (Tamni kao na slici)
    <q-footer absolute class="bg-blue-grey-10 q-pa-lg text-center">
       <div class="text-subtitle2 text-blue-2">Otkrijte ljepotu Hrvatske na svoj način</div>
       <div class="text-caption text-blue-grey-4 q-mt-xs">
@@ -205,6 +231,12 @@
   </q-card>
 </q-dialog>
 
+<q-dialog v-model="dialog">
+  <q-card style="width:90vw;max-width:1200px;background:black;">
+    <q-img :src="selectedImage" fit="contain" style="height:80vh" />
+  </q-card>
+</q-dialog>
+
 </q-layout>
 </template>
 
@@ -216,6 +248,9 @@ import { useRoute, useRouter } from 'vue-router';
 
 const posts = ref([])
 const comments = ref([])
+const slikeAtrakcije = ref([])
+const dialog = ref(false)
+const selectedImage = ref("")
 const name = ref("") // Za input linka slike
 const route = useRoute()
 const router = useRouter()
@@ -225,6 +260,20 @@ const user = ref(JSON.parse(localStorage.getItem("user")))
 
 const trenutniID = route.params.id
 
+const dohvatiSlikeAtrakcije = async () => {
+  try {
+    const response = await api.get(`/dohvatiSlikeAtrakcije/${trenutniID}`)
+    slikeAtrakcije.value = response.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const otvoriSliku = (src) => {
+  selectedImage.value = src
+  dialog.value = true
+}
+
 const getPosts = async () => {
   try {
     const response = await api.get(`/atrakcije/${trenutniID}`)
@@ -233,6 +282,7 @@ const getPosts = async () => {
     console.log("ATRAKCIJA:", posts.value)
     const komentari = await api.get(`/komentari/${trenutniID}`)
     comments.value = komentari.data.data
+    await dohvatiSlikeAtrakcije()
   } catch (error) {
     console.log(error)
   }
@@ -361,6 +411,7 @@ const dodajKomentar = async (komentarTekst, id) => {
     // refresh komentara odmah
     const komentari = await api.get(`/komentari/${id}`)
     comments.value = komentari.data.data
+    await dohvatiSlikeAtrakcije()
 
   } catch (error) {
     console.log(error)
