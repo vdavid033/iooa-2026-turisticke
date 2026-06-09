@@ -21,6 +21,7 @@ const routes = [
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
       { path: "dodavanje slika", component: () => import("pages/DodavanjeSlikaPage.vue"),},
       { path: "galerija slika", component: () => import("pages/GalerijaSlikaPage.vue"), },
+      { path: "moje-atrakcije", name: "MojeAtrakcije", component: () => import("pages/MojeAtrakcije.vue"), },
     ],
   },
 
