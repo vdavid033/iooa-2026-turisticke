@@ -30,7 +30,18 @@ var dbConn = mysql.createConnection({
 });
 
 //spajanje s bazom
-dbConn.connect();
+dbConn.connect((err) => {
+  if (err) {
+    console.error("Greška pri spajanju na bazu:", err.message);
+    return;
+  }
+
+  console.log("Spojeno na bazu.");
+});
+
+dbConn.on("error", (err) => {
+  console.error("MySQL connection error:", err.message);
+});
 
 function queryAsync(sql, params = []) {
   return new Promise((resolve, reject) => {

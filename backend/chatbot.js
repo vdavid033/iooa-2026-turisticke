@@ -182,23 +182,25 @@ function createChatbotRouter({ queryAsync }) {
     }
 
     if (
-      text.includes("gdje") ||
-      text.includes("u ") ||
-      text.includes("na adresi") ||
-      text.includes("u blizini") ||
-      text.includes("lokacija")
-    ) {
-      return "location";
-    }
-
-    if (
       text.includes("koje atrakcije") ||
+      text.includes("koje atrakcija") ||
       text.includes("sto imate") ||
       text.includes("što imate") ||
+      text.includes("imate u bazi") ||
       text.includes("popis atrakcija") ||
       text.includes("sve atrakcije")
     ) {
       return "all";
+    }
+
+    if (
+      text.includes("gdje") ||
+      text.includes("na adresi") ||
+      text.includes("u blizini") ||
+      text.includes("lokacija") ||
+      /\bu\s+[a-z]/i.test(message)
+    ) {
+      return "location";
     }
 
     return "search";
