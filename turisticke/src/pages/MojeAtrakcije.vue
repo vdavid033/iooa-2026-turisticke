@@ -1,6 +1,7 @@
 <template>
   <q-page class="bg-grey-1 q-pt-md">
     <div class="max-w-7xl mx-auto q-px-md">
+
       <div class="row items-center q-mb-sm">
         <q-btn
           flat
@@ -18,35 +19,32 @@
           Moje atrakcije
         </h1>
         <p class="text-subtitle1 text-grey-7 q-mt-sm">
-          Pregled atrakcija koje si dodao
+          Spremi atrakcije koje te zanimaju klikom na ❤️
         </p>
       </div>
 
-      <div v-if="!korisnik" class="text-center q-py-xl">
-        <q-icon name="lock" size="90px" color="grey-4" />
-        <p class="text-h5 text-grey-6 q-mt-md text-weight-light">
-          Moraš biti prijavljen kako bi vidio svoje atrakcije.
-        </p>
-        <q-btn
-          unelevated
-          rounded
-          color="primary"
-          label="Prijava"
-          icon="login"
+      <!-- Prebacivanje između omiljenih i svih atrakcija -->
+      <div class="row justify-center q-mb-xl">
+        <q-btn-toggle
+          v-model="prikaz"
           no-caps
-          to="/auth?mode=login"
-          class="q-mt-sm"
+          rounded
+          unelevated
+          toggle-color="primary"
+          color="white"
+          text-color="primary"
+          class="shadow-2"
+          :options="[
+            { label: `Omiljene (${favoriti.length})`, value: 'omiljene', icon: 'favorite' },
+            { label: 'Sve atrakcije', value: 'sve', icon: 'place' }
+          ]"
         />
       </div>
 
-      <main v-else class="q-pb-xl">
-        <div v-if="ucitavanje" class="text-center q-py-xl">
-          <q-spinner color="primary" size="48px" />
-        </div>
-
-        <div v-else-if="mojeAtrakcije.length > 0" class="row q-col-gutter-xl">
+      <main class="q-pb-xl">
+        <div v-if="prikazaneAtrakcije.length > 0" class="row q-col-gutter-xl">
           <div
-            v-for="attraction in mojeAtrakcije"
+            v-for="attraction in prikazaneAtrakcije"
             :key="attraction.id_atrakcije"
             class="col-12 col-sm-6 col-md-4"
           >
@@ -55,6 +53,23 @@
               @click="otvoriDetalje(attraction.id_atrakcije)"
             >
               <q-img :src="attraction.slika" :ratio="16/9" class="rounded-borders">
+                <!-- Gumb za spremanje u omiljeno -->
+                <div class="absolute-top-left q-ma-sm" style="background: transparent">
+                  <q-btn
+                    round
+                    dense
+                    :color="jeOmiljena(attraction.id_atrakcije) ? 'red-5' : 'white'"
+                    :text-color="jeOmiljena(attraction.id_atrakcije) ? 'white' : 'red-5'"
+                    :icon="jeOmiljena(attraction.id_atrakcije) ? 'favorite' : 'favorite_border'"
+                    class="shadow-2"
+                    @click.stop="prebaciOmiljeno(attraction.id_atrakcije)"
+                  >
+                    <q-tooltip>
+                      {{ jeOmiljena(attraction.id_atrakcije) ? 'Ukloni iz omiljenih' : 'Dodaj u omiljene' }}
+                    </q-tooltip>
+                  </q-btn>
+                </div>
+
                 <div class="absolute-top-right q-ma-sm" style="background: transparent">
                   <q-badge color="orange" text-color="white" class="q-pa-xs text-bold shadow-2">
                     <q-icon name="star" size="14px" class="q-mr-xs" />
@@ -78,36 +93,37 @@
               <q-space />
               <q-separator inset />
 
-              <q-card-actions align="right" class="q-pa-md q-gutter-sm">
-                <q-btn
-                  flat
-                  color="primary"
-                  label="Uredi"
-                  icon="edit"
-                  no-caps
-                  @click.stop="otvoriUredi(attraction.id_atrakcije)"
-                />
+              <q-card-actions align="right" class="q-pa-md">
                 <q-btn flat color="primary" label="Pogledaj detalje" icon-right="arrow_forward" no-caps />
               </q-card-actions>
             </q-card>
           </div>
         </div>
 
-        <div v-else class="text-center q-py-xl">
-          <q-icon name="explore_off" size="100px" color="grey-4" />
+        <!-- Prazno stanje za omiljene -->
+        <div v-else-if="prikaz === 'omiljene'" class="text-center q-py-xl">
+          <q-icon name="favorite_border" size="100px" color="grey-4" />
           <p class="text-h5 text-grey-6 q-mt-md text-weight-light">
-            Još nisi dodao nijednu atrakciju.
+            Još nemaš spremljenih atrakcija
           </p>
           <q-btn
             unelevated
             rounded
             color="primary"
-            label="Dodaj atrakciju"
-            icon="add_location_alt"
+            label="Pregledaj sve atrakcije"
+            icon="place"
             no-caps
-            to="/unos"
+            @click="prikaz = 'sve'"
             class="q-mt-sm"
           />
+        </div>
+
+        <!-- Prazno stanje kad uopće nema atrakcija -->
+        <div v-else class="text-center q-py-xl">
+          <q-icon name="explore_off" size="100px" color="grey-4" />
+          <p class="text-h5 text-grey-6 q-mt-md text-weight-light">
+            Trenutno nema dostupnih atrakcija
+          </p>
         </div>
       </main>
     </div>
@@ -115,57 +131,70 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { api } from 'boot/axios'
+import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const mojeAtrakcije = ref([])
-const ucitavanje = ref(false)
-const korisnik = ref(null)
+const atrakcije = ref([])
+const favoriti = ref([])
+const prikaz = ref('omiljene')
 
-const procitajKorisnika = () => {
+// Favoriti se spremaju po korisniku (ili "gost" ako nije prijavljen)
+const korisnik = JSON.parse(localStorage.getItem('user') || 'null')
+const kljucFavorita = `omiljeneAtrakcije_${korisnik?.id ?? 'gost'}`
+
+const ucitajFavorite = () => {
   try {
-    korisnik.value = JSON.parse(localStorage.getItem('user') || 'null')
+    favoriti.value = JSON.parse(localStorage.getItem(kljucFavorita) || '[]')
   } catch {
-    korisnik.value = null
+    favoriti.value = []
   }
 }
 
-const dohvatiMojeAtrakcije = async () => {
-  if (!korisnik.value?.id) {
-    return
+const spremiFavorite = () => {
+  localStorage.setItem(kljucFavorita, JSON.stringify(favoriti.value))
+}
+
+const jeOmiljena = (id) => favoriti.value.includes(id)
+
+const prebaciOmiljeno = (id) => {
+  if (jeOmiljena(id)) {
+    favoriti.value = favoriti.value.filter((x) => x !== id)
+  } else {
+    favoriti.value = [...favoriti.value, id]
   }
+  spremiFavorite()
+}
 
-  ucitavanje.value = true
-
+const dohvatiAtrakcije = async () => {
   try {
-    const response = await api.get('/atrakcije', {
-      params: {
-        id_korisnika: korisnik.value.id,
-      },
-    })
-
-    mojeAtrakcije.value = Array.isArray(response.data) ? response.data : []
+    const response = await axios.get('http://localhost:4200/atrakcije')
+    atrakcije.value = response.data
   } catch (error) {
-    console.error('Greška pri dohvatu mojih atrakcija:', error)
-  } finally {
-    ucitavanje.value = false
+    console.error('Greška pri dohvatu atrakcija:', error)
   }
 }
+
+const prikazaneAtrakcije = computed(() => {
+  if (prikaz.value === 'omiljene') {
+    return atrakcije.value.filter((a) => favoriti.value.includes(a.id_atrakcije))
+  }
+  return atrakcije.value
+})
 
 const otvoriDetalje = (id) => {
   router.push({ name: 'one_atraction', params: { id } })
 }
 
-const otvoriUredi = (id) => {
-  router.push({ name: 'UrediMojuAtrakciju', params: { id } })
-}
-
 onMounted(() => {
-  procitajKorisnika()
-  dohvatiMojeAtrakcije()
+  ucitajFavorite()
+  dohvatiAtrakcije()
+  // Ako nema spremljenih, odmah pokaži sve da korisnik može dodavati
+  if (favoriti.value.length === 0) {
+    prikaz.value = 'sve'
+  }
 })
 </script>
 

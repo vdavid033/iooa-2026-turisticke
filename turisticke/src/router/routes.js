@@ -19,11 +19,8 @@ const routes = [
       },
       { path: "unos", component: () => import("pages/Unos_atrakcija.vue") },
       { path: "axo", component: () => import("pages/AxiosPageTest.vue") },
-      { path: "dodavanje slika", component: () => import("pages/DodavanjeSlikaPage.vue"),},
       { path: "galerija slika", component: () => import("pages/GalerijaSlikaPage.vue"), },
-      { path: "omiljene-atrakcije", name: "OmiljeneAtrakcije", component: () => import("pages/OmiljeneAtrakcije.vue"), },
       { path: "moje-atrakcije", name: "MojeAtrakcije", component: () => import("pages/MojeAtrakcije.vue"), },
-      { path: "moje-atrakcije/:id/uredi", name: "UrediMojuAtrakciju", component: () => import("pages/UrediMojuAtrakciju.vue"), },
     ],
   },
 
@@ -41,39 +38,9 @@ const routes = [
   },
 
   {
-    path: "/one_atraction",
-    component: () => import("layouts/BlankLayout.vue"),
-    children: [
-      {
-        name: "one_atraction",
-        path: ":id",
-        component: () => import("pages/AtrakcijePage.vue"),
-      },
-    ],
-  },
-
-  {
-    path: "/komentari",
-    component: () => import("layouts/BlankLayout.vue"),
-    children: [
-      {
-        name: "komentari",
-        path: ":id",
-        component: () => import("pages/komentariPage.vue"),
-      },
-    ],
-  },
-
-  {
-    path: "/slika",
-    component: () => import("layouts/BlankLayout.vue"),
-    children: [
-      {
-        name: "slika",
-        path: "",
-        component: () => import("pages/dodaj_slika.vue"),
-      },
-    ],
+    path: "/one_atraction/:id",
+    name: "one_atraction",
+    component: () => import("pages/AtrakcijePage.vue"),
   },
 
   // 404 Error

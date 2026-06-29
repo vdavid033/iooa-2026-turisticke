@@ -265,15 +265,9 @@ export default defineComponent({
     // Grupa "Moj sadržaj" – samo za prijavljene korisnike
     const mojSadrzajLinks = [
       {
-        title: "Omiljene atrakcije",
+        title: "Moje atrakcije",
         caption: "Spremljene / omiljene atrakcije",
         icon: "favorite",
-        link: "/omiljene-atrakcije",
-      },
-      {
-        title: "Moje atrakcije",
-        caption: "Atrakcije koje sam dodao",
-        icon: "person_pin_circle",
         link: "/moje-atrakcije",
       },
       {
