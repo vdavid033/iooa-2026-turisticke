@@ -25,13 +25,13 @@
 
                 <!-- Admin kontrole skrivene u gumbu na slici -->
                 <div class="q-mt-md">
-                  <q-btn-dropdown outline color="white" label="Uredi Atrakciju" icon="edit" dense>
+                  <q-btn-dropdown v-if="jeVlasnik(post)" outline color="white" label="Uredi Atrakciju" icon="edit" dense>
                     <q-list style="min-width: 250px">
                       <q-item
                         v-if="user && Number(user.id) === Number(post.id_korisnika)"
                         clickable
                         v-close-popup
-                        @click="otvoriUrediAtrakciju(post)">
+                        @click="otvoriUrediAtrakciju(post.id_atrakcije)">
                         <q-item-section avatar>
                           <q-icon name="edit" />
                         </q-item-section>
@@ -260,6 +260,10 @@ const user = ref(JSON.parse(localStorage.getItem("user")))
 
 const trenutniID = route.params.id
 
+const jeVlasnik = (post) => {
+  return user.value && Number(user.value.id) === Number(post.id_korisnika)
+}
+
 const dohvatiSlikeAtrakcije = async () => {
   try {
     const response = await api.get(`/dohvatiSlikeAtrakcije/${trenutniID}`)
@@ -290,7 +294,10 @@ const getPosts = async () => {
 
 const spremiSliku = async (link, id) => {
   try {
-    await api.put(`http://localhost:4200/dodajSliku/${id}`, { slika: link });
+    await api.put(`http://localhost:4200/dodajSliku/${id}`, {
+      slika: link,
+      id_korisnika: user.value.id
+    });
     getPosts();
   } catch (error) {
     console.log(error);
@@ -309,7 +316,9 @@ const dodajOcjenu = async (ocjena, id) => {
 
 const obrisi_sliku = async (id) => {
   try {
-    await api.delete(`http://localhost:4200/obrisi_sliku_atrakcije/${id}`);
+    await api.delete(`http://localhost:4200/obrisi_sliku_atrakcije/${id}`, {
+      params: { id_korisnika: user.value.id }
+    });
     getPosts();
   } catch (error) {
     console.log(error);
@@ -318,13 +327,15 @@ const obrisi_sliku = async (id) => {
 
 const deleteOcjena = async (id) => {
   try {
-    await api.delete(`http://localhost:4200/obrisi_ocjenu_atrakcije/${id}`);
+    await api.delete(`http://localhost:4200/obrisi_ocjenu_atrakcije/${id}`, {
+      params: { id_korisnika: user.value.id }
+    });
     getPosts();
   } catch (error) {
     console.log(error);
   }
 }
-const otvoriUrediAtrakciju = (post) => {
+const otvoriUrediAtrakciju = (id) => {
   const user = JSON.parse(localStorage.getItem("user"))
 
   if (!user) {
@@ -333,18 +344,7 @@ const otvoriUrediAtrakciju = (post) => {
     return
   }
 
-  editForm.value = {
-    id_atrakcije: post.id_atrakcije,
-    naziv: post.naziv,
-    opis: post.opis,
-    adresa: post.adresa,
-    geografska_sirina: post.geografska_sirina,
-    geografska_duzina: post.geografska_duzina,
-    slika: post.slika,
-    prosjecna_ocjena: post.prosjecna_ocjena || 0
-  }
-
-  editDialog.value = true
+  router.push({ name: "UrediMojuAtrakciju", params: { id } })
 }
 
 const spremiUredenuAtrakciju = async () => {
@@ -361,7 +361,8 @@ const spremiUredenuAtrakciju = async () => {
       prosjecna_ocjena: editForm.value.prosjecna_ocjena,
       geografska_sirina: editForm.value.geografska_sirina,
       geografska_duzina: editForm.value.geografska_duzina,
-      adresa: editForm.value.adresa
+      adresa: editForm.value.adresa,
+      id_korisnika: user.value.id
     })
 
     editDialog.value = false
