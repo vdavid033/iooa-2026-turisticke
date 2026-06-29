@@ -301,25 +301,58 @@ app.get("/komentari", function (request, response) {
 
 app.get('/komentari/:id', function (request, response) {
 let id_atrakcije = request.params.id;
-dbConn.query("SELECT * FROM Komentari WHERE VK_ID_atrakcije=?", id_atrakcije, function (error, results, fields) {
+dbConn.query("SELECT * FROM Komentari WHERE VK_ID_atrakcije=? ORDER BY ID_komentara ASC", id_atrakcije, function (error, results, fields) {
     if (error) throw error;
-    return response.send({
+
+    dbConn.query("SELECT id_ocjene, ocjena FROM Ocjena WHERE VK_ID_Atrakcije=? ORDER BY id_ocjene ASC", id_atrakcije, function (ratingError, ratings) {
+      if (ratingError) throw ratingError;
+
+      const offset = ratings.length - results.length;
+      const komentariSOcjenama = results.map((komentar, index) => {
+        const ratingIndex = index + offset;
+
+        return {
+          ...komentar,
+          ocjena: ratingIndex >= 0 && ratings[ratingIndex] ? ratings[ratingIndex].ocjena : null
+        };
+      });
+
+      return response.send({
         error: false,
-        data: results,
+        data: komentariSOcjenama,
         message: "lista komentara.",
+      });
     });
 });
 });
 // Dodavanje komentara za atrakciju po ID-u
 
 app.post('/dodajKomentar/:id', (req, res) => {
-const data = [req.body.Komentar, req.params.id]
-dbConn.query("INSERT INTO Komentari( Komentar, VK_ID_atrakcije) VALUES (?,?)", data,(err,result)=>{
-  if(err){
-    res.send('Error')
-  }else{
-    res.send(result)
+const komentar = req.body.Komentar;
+const ocjena = Number(req.body.ocjena);
+const id_atrakcije = req.params.id;
+
+if (!komentar) {
+  return res.status(400).send({ error: true, message: "Komentar je obavezan." });
+}
+
+if (!Number.isInteger(ocjena) || ocjena < 1 || ocjena > 5) {
+  return res.status(400).send({ error: true, message: "Ocjena mora biti broj od 1 do 5." });
+}
+
+dbConn.query("INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES (?, ?)", [ocjena, id_atrakcije], (ocjenaErr) => {
+  if(ocjenaErr){
+    return res.send('Error')
   }
+
+  const data = [komentar, id_atrakcije]
+  dbConn.query("INSERT INTO Komentari( Komentar, VK_ID_atrakcije) VALUES (?,?)", data,(err,result)=>{
+    if(err){
+      res.send('Error')
+    }else{
+      res.send(result)
+    }
+  })
 })
 });
 

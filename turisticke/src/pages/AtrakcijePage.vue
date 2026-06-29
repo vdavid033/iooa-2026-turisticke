@@ -142,9 +142,9 @@
 
                 <div class="q-mb-md">
                   <div class="text-caption text-grey-8 q-mb-xs">Ocjena</div>
-                  <q-btn-dropdown color="orange-4" :label="'Odaberi ocjenu'" unelevated text-color="black">
+                  <q-btn-dropdown color="orange-4" :label="odabranaOcjena ? `${odabranaOcjena} / 5` : 'Odaberi ocjenu'" unelevated text-color="black">
                     <q-list>
-                      <q-item v-for="n in 5" :key="n" clickable v-close-popup @click="dodajOcjenu(n, post.id_atrakcije)">
+                      <q-item v-for="n in 5" :key="n" clickable v-close-popup @click="dodajOcjenu(n)">
                         <q-item-section>{{ n }}</q-item-section>
                       </q-item>
                     </q-list>
@@ -177,7 +177,7 @@
               <!-- LISTA KOMENTARA -->
               <div class="text-subtitle2 text-grey-7 q-mb-md">Ovdje možete pogledati komentare o atrakciji</div>
               <div class="q-gutter-y-md">
-                <q-card v-for="item in comments" :key="item.id" flat bordered class="rounded-borders q-pa-md bg-white">
+                <q-card v-for="item in comments" :key="item.ID_komentara" flat bordered class="rounded-borders q-pa-md bg-white">
                   <div class="row items-center justify-between">
                     <div class="row items-center q-gutter-sm">
                       <q-avatar size="40px">
@@ -185,7 +185,13 @@
                       </q-avatar>
                       <div>
                         <div class="text-weight-bold text-primary">Korisnik #{{ item.vk_id_korisnika }}</div>
-                        <q-rating :model-value="4" readonly size="14px" color="orange-4" />
+                        <div v-if="ocjenaKomentara(item) > 0" class="row items-center q-gutter-xs">
+                          <q-rating :model-value="ocjenaKomentara(item)" readonly size="14px" color="orange-4" />
+                          <span class="text-caption text-grey-7">{{ ocjenaKomentara(item) }}/5</span>
+                        </div>
+                        <div v-else class="text-caption text-grey-6">
+                          Nema ocjene
+                        </div>
                       </div>
                     </div>
                     <div class="text-caption text-grey">
@@ -255,6 +261,7 @@ const name = ref("") // Za input linka slike
 const route = useRoute()
 const router = useRouter()
 const komentar = ref('')
+const odabranaOcjena = ref(null)
 const message = ref('')
 const user = ref(JSON.parse(localStorage.getItem("user")))
 
@@ -304,15 +311,14 @@ const spremiSliku = async (link, id) => {
   }
 }
 
-const dodajOcjenu = async (ocjena, id) => {
-  if (!ocjena) return;
-  try {
-    await api.post(`http://localhost:4200/dodajOcjenuOcjene/${id}`, { ocjena: ocjena });
-    getPosts();
-  } catch (error) {
-    console.log(error);
-  }
-};
+const dodajOcjenu = (ocjena) => {
+  odabranaOcjena.value = ocjena
+}
+
+const ocjenaKomentara = (item) => {
+  const ocjena = Number(item.ocjena)
+  return Number.isInteger(ocjena) && ocjena >= 1 && ocjena <= 5 ? ocjena : 0
+}
 
 const obrisi_sliku = async (id) => {
   try {
@@ -399,15 +405,26 @@ onMounted(() => {
 
 
 const dodajKomentar = async (komentarTekst, id) => {
-  if (!komentarTekst) return;
+  if (!komentarTekst) {
+    alert("Komentar je obavezan.")
+    return
+  }
+
+  if (!odabranaOcjena.value) {
+    alert("Odaberite ocjenu od 1 do 5.")
+    return
+  }
 
   try {
     await api.post(`http://localhost:4200/dodajKomentar/${id}`, {
-      Komentar: komentarTekst
+      Komentar: komentarTekst,
+      ocjena: odabranaOcjena.value,
+      id_korisnika: user.value?.id
     });
 
 
     komentar.value = ''
+    odabranaOcjena.value = null
 
     // refresh komentara odmah
     const komentari = await api.get(`/komentari/${id}`)
