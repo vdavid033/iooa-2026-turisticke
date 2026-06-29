@@ -209,6 +209,16 @@ app.post("/api/unos-slike", function (req, res) {
 app.get('/atrakcije', (req, res) => {
 
   const limit = parseInt(req.query.limit) || 100; // default ako nema limita
+  const id_korisnika = req.query.id_korisnika;
+  const params = [];
+  let whereClause = "";
+
+  if (id_korisnika) {
+    whereClause = "WHERE a.id_korisnika = ?";
+    params.push(id_korisnika);
+  }
+
+  params.push(limit);
 
   dbConn.query(`
     SELECT 
@@ -217,9 +227,10 @@ app.get('/atrakcije', (req, res) => {
     FROM atrakcije a
     LEFT JOIN Ocjena o 
       ON a.id_atrakcije = o.VK_ID_Atrakcije
+    ${whereClause}
     GROUP BY a.id_atrakcije
     LIMIT ?
-  `, [limit], (err, result) => {
+  `, params, (err, result) => {
     if (err) {
       res.send('error');
     } else {
