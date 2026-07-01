@@ -8,7 +8,7 @@
     </q-header>
 
     <q-page-container>
-      <q-page v-for="post in posts" :key="post.id_atrakcije" class="q-pb-xl">
+      <q-page v-for="post in posts" :key="post.id" class="q-pb-xl">
 
         <!-- HERO SEKCIJA: Velika slika s naslovom -->
         <div class="relative-position shadow-5" style="height: 450px; overflow: hidden">
@@ -25,9 +25,10 @@
 
                 <!-- Admin kontrole skrivene u gumbu na slici -->
                 <div class="q-mt-md">
-                  <q-btn-dropdown v-if="canManageAttraction(post)" outline color="white" label="Uredi Atrakciju" icon="edit" dense>
+                  <q-btn-dropdown outline color="white" label="Uredi Atrakciju" icon="edit" dense>
                     <q-list style="min-width: 250px">
                       <q-item
+                        v-if="user && Number(user.id) === Number(post.id_korisnika)"
                         clickable
                         v-close-popup
                         @click="otvoriUrediAtrakciju(post)">
@@ -38,7 +39,7 @@
                       </q-item>
 
                     <q-item
-                       v-if="canDeleteAttraction(post)"
+                      v-if="user && Number(user.id) === Number(post.id_korisnika)"
                        clickable
                         v-close-popup
                         @click="obrisiAtrakciju(post.id_atrakcije)">
@@ -48,19 +49,7 @@
                       <q-item-section>Obriši atrakciju</q-item-section>
                     </q-item>
 
-                    <q-separator />
-
-                      <q-separator />
-
-                      <q-item-section class="q-pa-md">
-                        <q-input filled v-model="name" label="Link nove slike" dense />
-                        <q-btn color="primary" label="Spremi sliku" class="q-mt-sm" @click="spremiSliku(name, post.id_atrakcije)" />
-                      </q-item-section>
-                      <q-separator />
-                      <q-item clickable v-close-popup @click="obrisi_sliku(post.id_atrakcije)" class="text-negative">
-                        <q-item-section avatar><q-icon name="delete" /></q-item-section>
-                        <q-item-section>Obriši sliku</q-item-section>
-                      </q-item>
+                
                       <q-item clickable v-close-popup @click="deleteOcjena(post.id_atrakcije)" class="text-warning">
                         <q-item-section avatar><q-icon name="star_outline" /></q-item-section>
                         <q-item-section>Resetiraj ocjene</q-item-section>
@@ -176,14 +165,14 @@
               <!-- LISTA KOMENTARA -->
               <div class="text-subtitle2 text-grey-7 q-mb-md">Ovdje možete pogledati komentare o atrakciji</div>
               <div class="q-gutter-y-md">
-                <q-card v-for="item in comments" :key="item.ID_komentara" flat bordered class="rounded-borders q-pa-md bg-white">
+                <q-card v-for="item in comments" :key="item.id" flat bordered class="rounded-borders q-pa-md bg-white">
                   <div class="row items-center justify-between">
                     <div class="row items-center q-gutter-sm">
                       <q-avatar size="40px">
                         <img src="https://cdn.quasar.dev/img/boy-avatar.png">
                       </q-avatar>
                       <div>
-                        <div class="text-weight-bold text-primary">{{ nazivAutoraKomentara(item) }}</div>
+                        <div class="text-weight-bold text-primary">Korisnik #{{ item.vk_id_korisnika }}</div>
                         <q-rating :model-value="4" readonly size="14px" color="orange-4" />
                       </div>
                     </div>
@@ -219,20 +208,10 @@
       <q-input v-model="editForm.naziv" label="Naziv atrakcije" filled />
       <q-input v-model="editForm.opis" label="Opis atrakcije" filled type="textarea" />
       <q-input v-model="editForm.adresa" label="Adresa" filled />
+      <q-input v-model="editForm.slika" label="Naslovna slika (link)" filled />
+      <q-img v-if="editForm.slika" :src="editForm.slika" :ratio="16/9" class="rounded-borders" />
       <q-input v-model="editForm.geografska_sirina" label="Geografska širina" filled />
       <q-input v-model="editForm.geografska_duzina" label="Geografska dužina" filled />
-      <q-input v-model="editForm.slika" label="URL slike" filled />
-      <div>
-        <div class="text-caption text-grey-7 q-mb-xs">Ili odaberi novu sliku s računala</div>
-        <input type="file" accept=".jpg,.jpeg,.png,.webp" @change="onEditImageFileChange" />
-      </div>
-      <q-img
-        v-if="editForm.slika"
-        :src="editForm.slika"
-        style="height: 220px"
-        fit="cover"
-        class="rounded-borders"
-      />
     </q-card-section>
 
     <q-card-actions align="right">
@@ -262,40 +241,11 @@ const comments = ref([])
 const slikeAtrakcije = ref([])
 const dialog = ref(false)
 const selectedImage = ref("")
-const name = ref("") // Za input linka slike
 const route = useRoute()
 const router = useRouter()
 const komentar = ref('')
 const message = ref('')
 const user = ref(JSON.parse(localStorage.getItem("user")))
-
-const getLoggedUser = () => {
-  const storedUser = JSON.parse(localStorage.getItem("user"))
-  user.value = storedUser
-  return storedUser
-}
-
-const getLoggedUserId = () => {
-  const loggedUser = getLoggedUser()
-  return loggedUser?.id || loggedUser?.id_korisnika || null
-}
-
-const canManageAttraction = () => {
-  return Boolean(getLoggedUserId())
-}
-
-const canDeleteAttraction = (post) => {
-  const loggedUserId = getLoggedUserId()
-  return Boolean(loggedUserId) && Number(loggedUserId) === Number(post.id_korisnika)
-}
-
-const nazivAutoraKomentara = (comment) => {
-  if (comment.korisnicko_ime) return comment.korisnicko_ime
-  if (comment.KORISNICKO_IME) return comment.KORISNICKO_IME
-
-  const idKorisnika = comment.VK_ID_korisnika || comment.vk_id_korisnika
-  return idKorisnika ? `Korisnik #${idKorisnika}` : 'Nepoznat korisnik'
-}
 
 const trenutniID = route.params.id
 
@@ -316,39 +266,14 @@ const otvoriSliku = (src) => {
 const getPosts = async () => {
   try {
     const response = await api.get(`/atrakcije/${trenutniID}`)
-    const atrakcija = response.data.data || response.data
-    posts.value = Array.isArray(atrakcija) ? atrakcija : [atrakcija]
-
+    posts.value = response.data
+    console.log("USER IZ LOCALSTORAGE:", user.value)
+    console.log("ATRAKCIJA:", posts.value)
     const komentari = await api.get(`/komentari/${trenutniID}`)
     comments.value = komentari.data.data
     await dohvatiSlikeAtrakcije()
   } catch (error) {
     console.log(error)
-  }
-}
-
-const spremiSliku = async (link, id) => {
-  const idKorisnika = getLoggedUserId()
-  if (!idKorisnika) {
-    alert("Morate biti prijavljeni kako biste dodali sliku.")
-    return
-  }
-
-  if (!link) {
-    alert("Unesite link slike.")
-    return
-  }
-
-  try {
-    await api.put(`/dodajSliku/${id}`, {
-      slika: link,
-      id_korisnika: idKorisnika
-    })
-    name.value = ""
-    await getPosts()
-  } catch (error) {
-    console.log(error)
-    alert(error.response?.data?.message || "Greška pri dodavanju slike.")
   }
 }
 
@@ -363,45 +288,28 @@ const dodajOcjenu = async (ocjena, id) => {
 };
 
 const obrisi_sliku = async (id) => {
-  const idKorisnika = getLoggedUserId()
-  if (!idKorisnika) {
-    alert("Morate biti prijavljeni kako biste obrisali sliku.")
-    return
-  }
-
   try {
-    await api.delete(`/obrisi_sliku_atrakcije/${id}`, {
-      params: { id_korisnika: idKorisnika }
-    })
-    await getPosts()
+    await api.delete(`http://localhost:4200/obrisi_sliku_atrakcije/${id}`);
+    getPosts();
   } catch (error) {
-    console.log(error)
-    alert(error.response?.data?.message || "Greška pri brisanju slike.")
+    console.log(error);
   }
 }
 
 const deleteOcjena = async (id) => {
-  const idKorisnika = getLoggedUserId()
-  if (!idKorisnika) {
-    alert("Morate biti prijavljeni kako biste resetirali ocjene.")
-    return
-  }
-
   try {
-    await api.delete(`/obrisi_ocjenu_atrakcije/${id}`, {
-      params: { id_korisnika: idKorisnika }
-    })
-    await getPosts()
+    await api.delete(`http://localhost:4200/obrisi_ocjenu_atrakcije/${id}`);
+    getPosts();
   } catch (error) {
-    console.log(error)
-    alert(error.response?.data?.message || "Greška pri resetiranju ocjena.")
+    console.log(error);
   }
 }
 const otvoriUrediAtrakciju = (post) => {
-  const idKorisnika = getLoggedUserId()
+  const user = JSON.parse(localStorage.getItem("user"))
 
-  if (!idKorisnika) {
+  if (!user) {
     alert("Morate biti prijavljeni kako biste uredili atrakciju.")
+    router.push("/auth")
     return
   }
 
@@ -434,7 +342,7 @@ const spremiUredenuAtrakciju = async () => {
       geografska_sirina: editForm.value.geografska_sirina,
       geografska_duzina: editForm.value.geografska_duzina,
       adresa: editForm.value.adresa,
-      id_korisnika: getLoggedUserId()
+      id_korisnika: user.value.id
     })
 
     editDialog.value = false
@@ -443,17 +351,11 @@ const spremiUredenuAtrakciju = async () => {
     alert("Atrakcija je uspješno uređena.")
   } catch (error) {
     console.log(error)
-    alert(error.response?.data?.details || error.response?.data?.message || "Greška pri uređivanju atrakcije.")
+    alert("Greška pri uređivanju atrakcije.")
   }
 }
 
 const obrisiAtrakciju = async (id_atrakcije) => {
-  const idKorisnika = getLoggedUserId()
-  if (!idKorisnika) {
-    alert("Morate biti prijavljeni kako biste obrisali atrakciju.")
-    return
-  }
-
   const potvrda = confirm("Jeste li sigurni da želite obrisati ovu atrakciju?")
 
   if (!potvrda) {
@@ -461,7 +363,7 @@ const obrisiAtrakciju = async (id_atrakcije) => {
   }
 
   try {
-    await api.delete(`/atrakcije/obrisi/${id_atrakcije}/${idKorisnika}`)
+    await api.delete(`/atrakcije/obrisi/${id_atrakcije}/${user.value.id}`)
 
     alert("Atrakcija je uspješno obrisana.")
     router.push("/atrakcije")
@@ -477,90 +379,25 @@ onMounted(() => {
 
 
 const dodajKomentar = async (komentarTekst, id) => {
-  if (!komentarTekst) return
-
-  const idKorisnika = getLoggedUserId()
-  if (!idKorisnika) {
-    alert("Morate biti prijavljeni kako bi komentar imao ime korisnika.")
-    router.push("/auth")
-    return
-  }
+  if (!komentarTekst) return;
 
   try {
-    await api.post(`/dodajKomentar/${id}`, {
-      Komentar: komentarTekst,
-      id_korisnika: idKorisnika
-    })
+    await api.post(`http://localhost:4200/dodajKomentar/${id}`, {
+      Komentar: komentarTekst
+    });
+
 
     komentar.value = ''
-    message.value = 'Komentar je dodan.'
 
+    // refresh komentara odmah
     const komentari = await api.get(`/komentari/${id}`)
     comments.value = komentari.data.data
     await dohvatiSlikeAtrakcije()
 
   } catch (error) {
     console.log(error)
-    alert(error.response?.data?.message || "Greška pri dodavanju komentara.")
   }
 }
-const onEditImageFileChange = async (event) => {
-  const file = event.target.files?.[0]
-  if (!file) return
-
-  if (!file.type.startsWith('image/')) {
-    alert('Odaberite datoteku koja je slika.')
-    event.target.value = ''
-    return
-  }
-
-  try {
-    editForm.value.slika = await smanjiSlikuZaBazu(file)
-  } catch (error) {
-    console.log(error)
-    alert('Greška pri učitavanju slike. Probajte manju JPG/PNG sliku ili zalijepite URL slike.')
-  }
-}
-
-const smanjiSlikuZaBazu = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onload = () => {
-      const img = new Image()
-
-      img.onload = () => {
-        const maxSize = 1200
-        let width = img.width
-        let height = img.height
-
-        if (width > height && width > maxSize) {
-          height = Math.round((height * maxSize) / width)
-          width = maxSize
-        } else if (height > maxSize) {
-          width = Math.round((width * maxSize) / height)
-          height = maxSize
-        }
-
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(img, 0, 0, width, height)
-
-        resolve(canvas.toDataURL('image/jpeg', 0.8))
-      }
-
-      img.onerror = reject
-      img.src = reader.result
-    }
-
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
 const editDialog = ref(false)
 
 const editForm = ref({
