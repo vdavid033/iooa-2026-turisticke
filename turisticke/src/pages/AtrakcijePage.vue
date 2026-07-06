@@ -31,7 +31,7 @@
                         v-if="user && Number(user.id) === Number(post.id_korisnika)"
                         clickable
                         v-close-popup
-                        @click="otvoriUrediAtrakciju(post.id_atrakcije)">
+                        @click="otvoriUrediAtrakciju(post)">
                         <q-item-section avatar>
                           <q-icon name="edit" />
                         </q-item-section>
@@ -53,10 +53,7 @@
 
                       <q-separator />
 
-                      <q-item-section class="q-pa-md">
-                        <q-input filled v-model="name" label="Link nove slike" dense />
-                        <q-btn color="primary" label="Spremi sliku" class="q-mt-sm" @click="spremiSliku(name, post.id_atrakcije)" />
-                      </q-item-section>
+                      
                       <q-separator />
                       <q-item clickable v-close-popup @click="obrisi_sliku(post.id_atrakcije)" class="text-negative">
                         <q-item-section avatar><q-icon name="delete" /></q-item-section>
@@ -225,6 +222,9 @@
     <q-card-section class="q-gutter-md">
       <q-input v-model="editForm.naziv" label="Naziv atrakcije" filled />
       <q-input v-model="editForm.opis" label="Opis atrakcije" filled type="textarea" />
+      <q-input v-model="editForm.slika" label="Naslovna slika (link)" filled />
+
+      <q-img v-if="editForm.slika" :src="editForm.slika" :ratio="16/9" class="rounded-borders"/>
       <q-input v-model="editForm.adresa" label="Adresa" filled />
       <q-input v-model="editForm.geografska_sirina" label="Geografska širina" filled />
       <q-input v-model="editForm.geografska_duzina" label="Geografska dužina" filled />
@@ -341,7 +341,7 @@ const deleteOcjena = async (id) => {
     console.log(error);
   }
 }
-const otvoriUrediAtrakciju = (id) => {
+const otvoriUrediAtrakciju = (post) => {
   const user = JSON.parse(localStorage.getItem("user"))
 
   if (!user) {
@@ -350,7 +350,18 @@ const otvoriUrediAtrakciju = (id) => {
     return
   }
 
-  router.push({ name: "UrediMojuAtrakciju", params: { id } })
+  editForm.value = {
+    id_atrakcije: post.id_atrakcije,
+    naziv: post.naziv,
+    opis: post.opis,
+    slika: post.slika,
+    prosjecna_ocjena: post.prosjecna_ocjena,
+    geografska_sirina: post.geografska_sirina,
+    geografska_duzina: post.geografska_duzina,
+    adresa: post.adresa
+  }
+
+  editDialog.value = true
 }
 
 const spremiUredenuAtrakciju = async () => {
