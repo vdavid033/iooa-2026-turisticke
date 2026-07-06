@@ -55,14 +55,8 @@
 
                       
                       <q-separator />
-                      <q-item clickable v-close-popup @click="obrisi_sliku(post.id_atrakcije)" class="text-negative">
-                        <q-item-section avatar><q-icon name="delete" /></q-item-section>
-                        <q-item-section>Obriši sliku</q-item-section>
-                      </q-item>
-                      <q-item clickable v-close-popup @click="deleteOcjena(post.id_atrakcije)" class="text-warning">
-                        <q-item-section avatar><q-icon name="star_outline" /></q-item-section>
-                        <q-item-section>Resetiraj ocjene</q-item-section>
-                      </q-item>
+                      
+                      
                     </q-list>
                   </q-btn-dropdown>
                 </div>
