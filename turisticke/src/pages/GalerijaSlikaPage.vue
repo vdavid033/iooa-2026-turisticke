@@ -234,10 +234,16 @@ export default {
 
     async obrisiSliku(id_slike){
 
+      if (!this.user?.id) {
+        alert("Morate biti prijavljeni kako biste obrisali sliku.")
+        return
+      }
+
       try{
 
         await axios.delete(
-          `http://localhost:4200/obrisiSliku/${id_slike}`
+          `http://localhost:4200/obrisiSliku/${id_slike}`,
+          { params: { id_korisnika: this.user.id } }
         )
 
         this.slike = this.slike.filter(

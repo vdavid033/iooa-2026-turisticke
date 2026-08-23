@@ -89,6 +89,17 @@
               </div>
 
               <q-input v-model="forma.slika" label="Link nove slike" filled />
+              <q-file
+                v-model="novaSlika"
+                filled
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                label="Odaberi novu sliku s računala"
+                @update:model-value="odaberiSliku"
+              >
+                <template #prepend>
+                  <q-icon name="upload" />
+                </template>
+              </q-file>
             </q-card-section>
 
             <q-card-actions align="right" class="q-pa-md q-gutter-sm">
@@ -127,6 +138,7 @@ const idAtrakcije = route.params.id
 const korisnik = ref(null)
 const ucitavanje = ref(true)
 const statusPoruka = ref('')
+const novaSlika = ref(null)
 
 const forma = ref({
   naziv: '',
@@ -178,11 +190,59 @@ const ucitajAtrakciju = async () => {
       slika: atrakcija.slika || '',
       prosjecna_ocjena: atrakcija.prosjecna_ocjena || 0,
     }
+    novaSlika.value = null
   } catch (error) {
     console.error(error)
     statusPoruka.value = 'Greška pri dohvaćanju atrakcije.'
   } finally {
     ucitavanje.value = false
+  }
+}
+
+const procitajSlikuKaoBase64 = (datoteka) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => {
+    if (typeof reader.result === 'string') {
+      resolve(reader.result)
+      return
+    }
+
+    reject(new Error('Preglednik nije uspio pročitati odabranu sliku.'))
+  }
+  reader.onerror = () => reject(reader.error || new Error('Preglednik nije uspio pročitati odabranu sliku.'))
+  reader.readAsDataURL(datoteka)
+})
+
+const odaberiSliku = async (datoteka) => {
+  const slika = Array.isArray(datoteka) ? datoteka[0] : datoteka
+
+  if (!slika) {
+    return
+  }
+
+  const nazivDatoteke = String(slika.name || '')
+  const tipDatoteke = String(slika.type || '').toLowerCase()
+  const jePodrzanaSlika = ['image/jpeg', 'image/png'].includes(tipDatoteke)
+    || /\.(jpe?g|png)$/i.test(nazivDatoteke)
+
+  if (!jePodrzanaSlika) {
+    novaSlika.value = null
+    alert('Odaberite JPEG ili PNG sliku.')
+    return
+  }
+
+  if (slika.size > 5 * 1024 * 1024) {
+    novaSlika.value = null
+    alert('Slika može imati najviše 5 MB.')
+    return
+  }
+
+  try {
+    forma.value.slika = await procitajSlikuKaoBase64(slika)
+  } catch (error) {
+    console.error(error)
+    novaSlika.value = null
+    alert(error?.message || 'Došlo je do pogreške prilikom učitavanja slike.')
   }
 }
 
@@ -238,6 +298,7 @@ const obrisiSliku = async () => {
     })
 
     forma.value.slika = ''
+    novaSlika.value = null
     alert('Slika je obrisana.')
   } catch (error) {
     console.error(error)

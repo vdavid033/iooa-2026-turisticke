@@ -175,7 +175,9 @@
                         <img src="https://cdn.quasar.dev/img/boy-avatar.png">
                       </q-avatar>
                       <div>
-                        <div class="text-weight-bold text-primary">Korisnik #{{ item.vk_id_korisnika }}</div>
+                        <div class="text-weight-bold text-primary">
+                          {{ item.korisnicko_ime || 'Nepoznati korisnik' }}
+                        </div>
                         <div v-if="ocjenaKomentara(item) > 0" class="row items-center q-gutter-xs">
                           <q-rating :model-value="ocjenaKomentara(item)" readonly size="14px" color="orange-4" />
                           <span class="text-caption text-grey-7">{{ ocjenaKomentara(item) }}/5</span>
@@ -217,6 +219,17 @@
       <q-input v-model="editForm.naziv" label="Naziv atrakcije" filled />
       <q-input v-model="editForm.opis" label="Opis atrakcije" filled type="textarea" />
       <q-input v-model="editForm.slika" label="Naslovna slika (link)" filled />
+      <q-file
+        v-model="novaSlikaUredivanja"
+        filled
+        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+        label="Odaberi novu sliku s računala"
+        @update:model-value="odaberiSlikuZaUredivanje"
+      >
+        <template #prepend>
+          <q-icon name="upload" />
+        </template>
+      </q-file>
 
       <q-img v-if="editForm.slika" :src="editForm.slika" :ratio="16/9" class="rounded-borders"/>
       <q-input v-model="editForm.adresa" label="Adresa" filled />
@@ -258,6 +271,7 @@ const komentar = ref('')
 const odabranaOcjena = ref(null)
 const message = ref('')
 const user = ref(JSON.parse(localStorage.getItem("user")))
+const novaSlikaUredivanja = ref(null)
 
 const trenutniID = route.params.id
 
@@ -354,11 +368,65 @@ const otvoriUrediAtrakciju = (post) => {
     geografska_duzina: post.geografska_duzina,
     adresa: post.adresa
   }
+  novaSlikaUredivanja.value = null
 
   editDialog.value = true
 }
 
+const procitajSlikuKaoBase64 = (datoteka) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => {
+    if (typeof reader.result === 'string') {
+      resolve(reader.result)
+      return
+    }
+
+    reject(new Error('Preglednik nije uspio pročitati odabranu sliku.'))
+  }
+  reader.onerror = () => reject(reader.error || new Error('Preglednik nije uspio pročitati odabranu sliku.'))
+  reader.readAsDataURL(datoteka)
+})
+
+const odaberiSlikuZaUredivanje = async (datoteka) => {
+  const slika = Array.isArray(datoteka) ? datoteka[0] : datoteka
+
+  if (!slika) {
+    return
+  }
+
+  const nazivDatoteke = String(slika.name || '')
+  const tipDatoteke = String(slika.type || '').toLowerCase()
+  const jePodrzanaSlika = ['image/jpeg', 'image/png'].includes(tipDatoteke)
+    || /\.(jpe?g|png)$/i.test(nazivDatoteke)
+
+  if (!jePodrzanaSlika) {
+    novaSlikaUredivanja.value = null
+    alert('Odaberite JPEG ili PNG sliku.')
+    return
+  }
+
+  if (slika.size > 5 * 1024 * 1024) {
+    novaSlikaUredivanja.value = null
+    alert('Slika može imati najviše 5 MB.')
+    return
+  }
+
+  try {
+    editForm.value.slika = await procitajSlikuKaoBase64(slika)
+  } catch (error) {
+    console.error(error)
+    novaSlikaUredivanja.value = null
+    alert(error?.message || 'Došlo je do pogreške prilikom učitavanja slike.')
+  }
+}
+
 const spremiUredenuAtrakciju = async () => {
+  if (!user.value?.id) {
+    alert("Morate biti prijavljeni kako biste uredili atrakciju.")
+    router.push("/auth")
+    return
+  }
+
   if (!editForm.value.naziv || !editForm.value.opis) {
     alert("Naziv i opis atrakcije su obavezni.")
     return
@@ -377,6 +445,7 @@ const spremiUredenuAtrakciju = async () => {
     })
 
     editDialog.value = false
+    novaSlikaUredivanja.value = null
     await getPosts()
 
     alert("Atrakcija je uspješno uređena.")
