@@ -91,6 +91,41 @@ function provjeriVlasnikaAtrakcije(request, response, id_atrakcije, callback) {
   );
 }
 
+function provjeriVlasnikaSlike(request, response, id_slike, callback) {
+  const id_korisnika = getRequestUserId(request);
+
+  if (!id_korisnika) {
+    return response.status(401).send({
+      error: true,
+      message: "Morate biti prijavljeni."
+    });
+  }
+
+  dbConn.query(
+    "SELECT id_korisnika FROM slike WHERE id_slike = ?",
+    [id_slike],
+    function (error, results) {
+      if (error) throw error;
+
+      if (results.length === 0) {
+        return response.status(404).send({
+          error: true,
+          message: "Slika ne postoji."
+        });
+      }
+
+      if (Number(results[0].id_korisnika) !== Number(id_korisnika)) {
+        return response.status(403).send({
+          error: true,
+          message: "Nemate pravo obrisati ovu sliku."
+        });
+      }
+
+      callback(id_korisnika);
+    }
+  );
+}
+
 
 
 
@@ -288,7 +323,12 @@ app.get('/slike', (req,res)=>{
 });
 /// uzimanje podataka o komentarima
 app.get("/komentari", function (request, response) {
-  dbConn.query("SELECT * FROM Komentari", function (error, results, fields) {
+  dbConn.query(`
+    SELECT k.*, korisnici_test.korisnicko_ime
+    FROM Komentari k
+    LEFT JOIN korisnici_test
+      ON korisnici_test.id_korisnika = k.vk_id_korisnika
+  `, function (error, results, fields) {
       if (error) throw error;
       return response.send({
           error: false,
@@ -301,7 +341,14 @@ app.get("/komentari", function (request, response) {
 
 app.get('/komentari/:id', function (request, response) {
 let id_atrakcije = request.params.id;
-dbConn.query("SELECT * FROM Komentari WHERE VK_ID_atrakcije=? ORDER BY ID_komentara ASC", id_atrakcije, function (error, results, fields) {
+dbConn.query(`
+  SELECT k.*, korisnici_test.korisnicko_ime
+  FROM Komentari k
+  LEFT JOIN korisnici_test
+    ON korisnici_test.id_korisnika = k.vk_id_korisnika
+  WHERE k.VK_ID_atrakcije = ?
+  ORDER BY k.ID_komentara ASC
+`, [id_atrakcije], function (error, results, fields) {
     if (error) throw error;
 
     dbConn.query("SELECT id_ocjene, ocjena FROM Ocjena WHERE VK_ID_Atrakcije=? ORDER BY id_ocjene ASC", id_atrakcije, function (ratingError, ratings) {
@@ -331,6 +378,7 @@ app.post('/dodajKomentar/:id', (req, res) => {
 const komentar = req.body.Komentar;
 const ocjena = Number(req.body.ocjena);
 const id_atrakcije = req.params.id;
+const id_korisnika = getRequestUserId(req) || null;
 
 if (!komentar) {
   return res.status(400).send({ error: true, message: "Komentar je obavezan." });
@@ -345,8 +393,8 @@ dbConn.query("INSERT INTO Ocjena (ocjena, VK_ID_Atrakcije) VALUES (?, ?)", [ocje
     return res.send('Error')
   }
 
-  const data = [komentar, id_atrakcije]
-  dbConn.query("INSERT INTO Komentari( Komentar, VK_ID_atrakcije) VALUES (?,?)", data,(err,result)=>{
+  const data = [komentar, id_atrakcije, id_korisnika]
+  dbConn.query("INSERT INTO Komentari (Komentar, VK_ID_atrakcije, vk_id_korisnika) VALUES (?, ?, ?)", data,(err,result)=>{
     if(err){
       res.send('Error')
     }else{
@@ -839,29 +887,31 @@ app.delete('/atrakcije/obrisi/:id_atrakcije/:id_korisnika', function (request, r
       });
     }
 
-    const deleteQuery = "DELETE FROM slike WHERE id_slike = ?";
+    provjeriVlasnikaSlike(request, response, id_slike, function () {
+      const deleteQuery = "DELETE FROM slike WHERE id_slike = ?";
 
-    dbConn.query(
-      deleteQuery,
-      [id_slike],
+      dbConn.query(
+        deleteQuery,
+        [id_slike],
 
-      function (error, results) {
-        if (error) {
-          console.log(error);
+        function (error, results) {
+          if (error) {
+            console.log(error);
 
-          return response.status(500).send({
-            error: true,
-            message: "greška pri brisanju slike",
+            return response.status(500).send({
+              error: true,
+              message: "greška pri brisanju slike",
+            });
+          }
+
+          return response.send({
+            error: false,
+            data: results,
+            message: "slika obrisana",
           });
-        }
-
-        return response.send({
-          error: false,
-          data: results,
-          message: "slika obrisana",
-        });
-      },
-    );
+        },
+      );
+    });
   });
   app.get("/dohvatiSlikeAtrakcije/:id", async (req, res) => {
     try {
